@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#define VERSION "2017.05.15"
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -62,6 +64,10 @@ void MainWindow::setup()
             file.write("quelldateien_erhalten:ja");
             file.write("\n");
 
+            ui->checkBox_std_namen->setChecked(false);
+            file.write("std_namen:nein");
+            file.write("\n");
+
         }
         file.close();
     }else
@@ -101,6 +107,16 @@ void MainWindow::setup()
                     {
                         ui->checkBox_quelldateien_erhalten->setChecked(false);
                     }
+                }else if(zeile.contains("std_namen:"))
+                {
+                    std_namen = text_mitte(zeile, "std_namen:", "\n");
+                    if(std_namen == "ja")
+                    {
+                        ui->checkBox_std_namen->setChecked(true);
+                    }else
+                    {
+                        ui->checkBox_std_namen->setChecked(false);
+                    }
                 }
             }
         }
@@ -136,6 +152,10 @@ void MainWindow::schreibe_ini()
         file.write("quelldateien_erhalten:");
         file.write(quelldateien_erhalten.toUtf8());
         file.write("\n");
+
+        file.write("std_namen:");
+        file.write(std_namen.toUtf8());
+        file.write("\n");
     }
     file.close();
 }
@@ -143,7 +163,18 @@ void MainWindow::schreibe_ini()
 void MainWindow::on_actionInfo_triggered()
 {
     QString tmp;
-    tmp = "ASCII-Assistent / Version: 2017.05 / Lizenz:  GPL / Autor: Oliver Schuft\n";
+    tmp = "ASCII-Assistent / ";
+    tmp += VERSION;
+    tmp +=" / Lizenz:  GPL / Autor: Oliver Schuft\n";
+    tmp += "\nBislang noch nicht unsterstuetzt wird:\n";
+    tmp += "- Linie";
+    tmp += "\n";
+    tmp += "- Kreissegment";
+    tmp += "\n";
+    tmp += "- Kreissegment P2P";
+    tmp += "\n";
+    tmp += "- Ausklinkung";
+    tmp += "\n";
     ui->plainTextEdit_Meldungsfenster->setPlainText(tmp);
 }
 
@@ -245,6 +276,18 @@ void MainWindow::on_checkBox_quelldateien_erhalten_stateChanged()
     }
     schreibe_ini();
 }
+
+void MainWindow::on_checkBox_std_namen_stateChanged()
+{
+    if(ui->checkBox_std_namen->isChecked() == true)
+    {
+        std_namen = "ja";
+    }else
+    {
+        std_namen = "nein";
+    }
+    schreibe_ini();
+}
 //-----------------------------------------------------------------------
 void MainWindow::dateien_erfassen()
 {
@@ -312,8 +355,9 @@ void MainWindow::on_pushButton_auflisten_clicked()
         return;
     }
     dateien_erfassen();
-    QString vortext = dateien_alle.get_text();
-    vortext += "\n-----------------\n\n";
+    QString vortext = "-----------------alle Dateien:\n";
+    vortext += dateien_alle.get_text();
+    vortext += "\n\n-----------------Dateien zusammengefasst:\n";
     QString nachtext;
     for(uint i=1;i<=dateien_haupt.zeilenanzahl();i++)
     {
@@ -334,12 +378,25 @@ void MainWindow::on_pushButton_auflisten_clicked()
             nachtext += "\n";
         }
     }
+    if(std_namen == "ja")
+    {
+        nachtext += "\n-----------------Standard-Dateinamen:\n";
+        for(uint i=1;i<=postfixe.zeilenanzahl();i++)
+        {
+            nachtext += postfixe.zeile(i);
+            nachtext += "      -->      ";
+            nachtext += namen_durch_std_namen_tauschen(postfixe.zeile(i));
+            nachtext += "\n";
+        }
+    }
+
     ui->plainTextEdit_Meldungsfenster->setPlainText(vortext + nachtext);
     //ui->plainTextEdit_Meldungsfenster->setPlainText(dateien_neben.get_text());
 }
 
 void MainWindow::on_pushButton_Start_clicked()
 {
+    ui->plainTextEdit_Meldungsfenster->clear();
     if(verzeichnis_quelle.isEmpty())
     {
         QMessageBox::warning(this,"Abbruch","Quellverzeichniss nicht angegeben!",QMessageBox::Ok);
@@ -415,7 +472,11 @@ void MainWindow::on_pushButton_Start_clicked()
                 neue_Datei_tz.zeile_anhaengen(dateiinhalt_neben_tz.zeile(i));
             }
 
-            ui->plainTextEdit_Meldungsfenster->setPlainText("Vorgang abgeschlossen");
+            if(std_namen == "ja")
+            {
+                postfixe.zeile_ersaetzen(i,namen_durch_std_namen_tauschen(postfixe.zeile(i)));
+            }
+
             QFile datei_neu(verzeichnis_ziel + QDir::separator() + postfixe.zeile(i) + ASCII);
             if(!datei_neu.open(QIODevice::WriteOnly | QIODevice::Text))
             {
@@ -426,6 +487,19 @@ void MainWindow::on_pushButton_Start_clicked()
             {
                 datei_neu.write(neue_Datei_tz.get_text().toUtf8().constData());
                 datei_neu.close();
+                if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || i==1)
+                {
+                    ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
+                                                                    ASCII + \
+                                                                    " wurde angelegt.");
+                }else
+                {
+                    ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
+                                                                    "\n"+ \
+                                                                    postfixe.zeile(i) + \
+                                                                    ASCII + \
+                                                                    " wurde angelegt.");
+                }
                 if(quelldateien_erhalten=="nein")
                 {
                     datei_h.remove();
@@ -459,8 +533,11 @@ void MainWindow::on_pushButton_Start_clicked()
 
             dateiinhalt = bearbeitung_auf_die_Unterseite(dateiinhalt, prefix1);
 
-            //ui->plainTextEdit_Meldungsfenster->setPlainText(dateiinhalt);
-            ui->plainTextEdit_Meldungsfenster->setPlainText("Vorgang abgeschlossen");
+            if(std_namen == "ja")
+            {
+                postfixe.zeile_ersaetzen(i,namen_durch_std_namen_tauschen(postfixe.zeile(i)));
+            }
+
             QFile datei_neu(verzeichnis_ziel + QDir::separator() + postfixe.zeile(i) + ASCII);
             if(!datei_neu.open(QIODevice::WriteOnly | QIODevice::Text))
             {
@@ -471,6 +548,19 @@ void MainWindow::on_pushButton_Start_clicked()
             {
                 datei_neu.write(dateiinhalt.toUtf8().constData());
                 datei_neu.close();
+                if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || i==1)
+                {
+                    ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
+                                                                    ASCII + \
+                                                                    " wurde angelegt.");
+                }else
+                {
+                    ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
+                                                                    "\n"+ \
+                                                                    postfixe.zeile(i) + \
+                                                                    ASCII + \
+                                                                    " wurde angelegt.");
+                }
                 if(quelldateien_erhalten=="nein")
                 {
                     datei.remove();
@@ -497,10 +587,11 @@ QString MainWindow::bearbeitung_auf_die_Unterseite(QString dateitext, QString pr
     //Werkstückdicke merken für später (Z-Maß):
     tmp = programmkopf.zeile(4);
     double dicke = tmp.toDouble();
-    //Zeile 3 bearbeiten -->Bauteilnamen ändern
+    //Zeile 3 bearbeiten -->Bauteilnamen ändern:
     tmp = dateitext_tz.zeile(3);
     tmp = text_links(tmp, (text_links(prefix, ASCII)));
     dateitext_tz.zeile_ersaetzen(3, tmp);
+    //weiter ab Zeile 4:
     for(uint i=4;i<=dateitext_tz.zeilenanzahl();i++)//Zeile 1+2 können übersprungen werden, Zeile 3 ist bereits geämdert
     {
         text_zeilenweise zeile;
@@ -578,20 +669,58 @@ QString MainWindow::bearbeitung_auf_die_Unterseite(QString dateitext, QString pr
             }else if(zeile.zeile(3)==" 103")//Linie
             {
                 //Noch programmieren!!!!
+                //Vorerst sicherheitshalber raus nehmen:
+                dateitext_tz.zeile_ersaetzen(i, " ");
             }else if(zeile.zeile(3)==" 104")//Kreissegment
             {
                 //Noch programmieren!!!!
+                //Vorerst sicherheitshalber raus nehmen:
+                dateitext_tz.zeile_ersaetzen(i, " ");
             }else if(zeile.zeile(3)==" 105")//Ausklinkung
             {
                 //Noch programmieren!!!!
+                //Vorerst sicherheitshalber raus nehmen:
+                dateitext_tz.zeile_ersaetzen(i, " ");
             }else if(zeile.zeile(3)==" 106")//Kreissegment P2P
             {
                 //Noch programmieren!!!!
+                //Vorerst sicherheitshalber raus nehmen:
+                dateitext_tz.zeile_ersaetzen(i, " ");
             }
         }
         dateitext_tz.zeile_ersaetzen(i, zeile.get_text());
     }
     return dateitext_tz.get_text();
+}
+
+QString MainWindow::namen_durch_std_namen_tauschen(QString name)
+{
+    if(name == "Seite links")
+    {
+        name = "Seite_li";
+    }else if(name == "Seite rechts")
+    {
+        name = "Seite_re";
+    }else if(name == "Mittelseite")
+    {
+        name = "MS";
+    }else if(name == "Oberboden")
+    {
+        name = "OB";
+    }else if(name == "Unterboden")
+    {
+        name = "UB";
+    }else if(name == "Konstruktionsboden")
+    {
+        name = "KB";
+    }else if(name == "Einlegeboden")
+    {
+        name = "EB";
+    }else if(name == "Ruckwand")
+    {
+        name = "RW";
+    }
+    return name;
 }
 
 

@@ -41,12 +41,18 @@ private slots:
     void on_lineEdit_prefix1_editingFinished();
     void on_lineEdit_prefix2_editingFinished();
     void on_actionInfo_triggered();
+    void on_checkBox_std_namen_stateChanged();
 
 private:
     Ui::MainWindow *ui;
     QString tz; //Trennzeichen für Pfade (Linux '/'  Windows '\')
-    text_zeilenweise dateien_haupt, dateien_neben, dateien_alle, postfixe;
+    text_zeilenweise dateien_alle;   //Alle Dateinamen mit Prefix und Dateiendung
+    text_zeilenweise postfixe;       //Alle Dateinamen ohne Prefix und ohne Dateiendung
+    text_zeilenweise dateien_haupt;  //Alle Dateien der Hauptseite, leere Einträge = nur Name ohne Prefix
+    text_zeilenweise dateien_neben;  //Alle Dateien der Nebentseite, leere Einträge = nur Name ohne Prefix
+
     QString bearbeitung_auf_die_Unterseite(QString dateitext, QString prefix);
+    QString namen_durch_std_namen_tauschen(QString name);
 
     //Pfade:
     QString verzeichnis_quelle, verzeichnis_ziel;
@@ -55,6 +61,7 @@ private:
 
     //Checkboxen:
     QString quelldateien_erhalten;
+    QString std_namen;
 
     void setup();
     void schreibe_ini();
