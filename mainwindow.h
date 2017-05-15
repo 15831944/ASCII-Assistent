@@ -8,9 +8,14 @@
 #include <QDir>
 #include "text.h"
 #include "text_zeilenweise.h"
+#include "umwandeln.h"
 
 #ifndef INIFILE
 #define INIFILE "ascii_assistent.ini"
+#endif
+
+#ifndef ASCII
+#define ASCII ".ascii"
 #endif
 
 namespace Ui {
@@ -30,7 +35,7 @@ private slots:
     void on_pushButton_ziel_clicked();
     void on_pushButton_auflisten_clicked();
     void on_pushButton_Start_clicked();
-    void on_checkBox_quelldateien_erhalten_stateChanged(int arg1);
+    void on_checkBox_quelldateien_erhalten_stateChanged();
     void on_lineEdit_quelle_editingFinished();
     void on_lineEdit_ziel_editingFinished();
     void on_lineEdit_prefix1_editingFinished();
@@ -41,6 +46,7 @@ private:
     Ui::MainWindow *ui;
     QString tz; //Trennzeichen für Pfade (Linux '/'  Windows '\')
     text_zeilenweise dateien_haupt, dateien_neben, dateien_alle, postfixe;
+    QString bearbeitung_auf_die_Unterseite(QString dateitext, QString prefix);
 
     //Pfade:
     QString verzeichnis_quelle, verzeichnis_ziel;
