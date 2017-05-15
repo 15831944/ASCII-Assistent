@@ -130,8 +130,8 @@
      <rect>
       <x>11</x>
       <y>161</y>
-      <width>163</width>
-      <height>42</height>
+      <width>166</width>
+      <height>79</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
@@ -151,6 +151,20 @@
      </item>
      <item>
       <widget class="Line" name="line_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="checkBox_std_namen">
+       <property name="text">
+        <string>Standard-Dateinnamen</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="Line" name="line_3">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
