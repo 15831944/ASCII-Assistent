@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#define VERSION "2017.05.15"
+#define VERSION "2017.05.16"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -566,9 +566,64 @@ void MainWindow::on_pushButton_Start_clicked()
                     datei.remove();
                 }
             }
-        }//else if(dateien_neben.zeile(i).contains(prefix2))
+        }else if(dateien_neben.zeile(i).contains(prefix2))
         {
-            //Kommt nicht vor, Nebenseite wird nur Ausgegeben, wenn es auch eine Hauptseite gibt
+            QString dateiinhalt;
+            QFile datei(verzeichnis_quelle + QDir::separator() + dateien_neben.zeile(i));
+            if(!datei.exists())
+            {
+                QMessageBox::warning(this,"Abbruch","Datei " + dateien_neben.zeile(i) + " nicht gefunden!",QMessageBox::Ok);
+                ui->plainTextEdit_Meldungsfenster->setPlainText("Funktion mit Fehlermeldung abgebrochen!");
+                return;
+            }else
+            {
+                if(!datei.open(QIODevice::ReadOnly | QIODevice::Text))
+                {
+                    QMessageBox::warning(this,"Abbruch","Datei " + dateien_neben.zeile(i) + " konnte nicht geoefnnet werden!",QMessageBox::Ok);
+                    ui->plainTextEdit_Meldungsfenster->setPlainText("Funktion mit Fehlermeldung abgebruchen!");
+                    return;
+                }else
+                {
+                    dateiinhalt = datei.readAll();
+                }
+                datei.close();
+            }
+
+            dateiinhalt = bearbeitung_auf_die_Unterseite(dateiinhalt, prefix2);
+
+            if(std_namen == "ja")
+            {
+                postfixe.zeile_ersaetzen(i,namen_durch_std_namen_tauschen(postfixe.zeile(i)));
+            }
+
+            QFile datei_neu(verzeichnis_ziel + QDir::separator() + postfixe.zeile(i) + ASCII);
+            if(!datei_neu.open(QIODevice::WriteOnly | QIODevice::Text))
+            {
+                QMessageBox::warning(this,"Abbruch","Fehler beim Dateizugriff!",QMessageBox::Ok);
+                ui->plainTextEdit_Meldungsfenster->setPlainText("Funktion mit Fehlermeldung abgebrochen!");
+                return;
+            }else
+            {
+                datei_neu.write(dateiinhalt.toUtf8().constData());
+                datei_neu.close();
+                if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || i==1)
+                {
+                    ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
+                                                                    ASCII + \
+                                                                    " wurde angelegt.");
+                }else
+                {
+                    ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
+                                                                    "\n"+ \
+                                                                    postfixe.zeile(i) + \
+                                                                    ASCII + \
+                                                                    " wurde angelegt.");
+                }
+                if(quelldateien_erhalten=="nein")
+                {
+                    datei.remove();
+                }
+            }
         }
     }
 }
@@ -670,22 +725,22 @@ QString MainWindow::bearbeitung_auf_die_Unterseite(QString dateitext, QString pr
             {
                 //Noch programmieren!!!!
                 //Vorerst sicherheitshalber raus nehmen:
-                dateitext_tz.zeile_ersaetzen(i, " ");
+                zeile.set_text("");
             }else if(zeile.zeile(3)==" 104")//Kreissegment
             {
                 //Noch programmieren!!!!
                 //Vorerst sicherheitshalber raus nehmen:
-                dateitext_tz.zeile_ersaetzen(i, " ");
+               zeile.set_text("");
             }else if(zeile.zeile(3)==" 105")//Ausklinkung
             {
                 //Noch programmieren!!!!
                 //Vorerst sicherheitshalber raus nehmen:
-                dateitext_tz.zeile_ersaetzen(i, " ");
+                zeile.set_text("");
             }else if(zeile.zeile(3)==" 106")//Kreissegment P2P
             {
                 //Noch programmieren!!!!
                 //Vorerst sicherheitshalber raus nehmen:
-                dateitext_tz.zeile_ersaetzen(i, " ");
+                zeile.set_text("");
             }
         }
         dateitext_tz.zeile_ersaetzen(i, zeile.get_text());
@@ -695,30 +750,65 @@ QString MainWindow::bearbeitung_auf_die_Unterseite(QString dateitext, QString pr
 
 QString MainWindow::namen_durch_std_namen_tauschen(QString name)
 {
-    if(name == "Seite links")
+    if(name.contains("Seite_Links"))
     {
-        name = "Seite_li";
-    }else if(name == "Seite rechts")
+        name = "Seite_li" + text_rechts(name, "Seite_Links");
+        if(name == "Seite_li1")
+        {
+            name = "Seite_li";
+        }
+    }else if(name.contains("Seite_Rechts"))
     {
-        name = "Seite_re";
-    }else if(name == "Mittelseite")
+        name = "Seite_re" + text_rechts(name, "Seite_Rechts");
+        if(name == "Seite_re1")
+        {
+            name = "Seite_re";
+        }
+    }else if(name.contains("Mittelseite"))
     {
-        name = "MS";
-    }else if(name == "Oberboden")
+        name = "MS" + text_rechts(name, "Mittelseite");
+        if(name == "MS1")
+        {
+            name = "MS";
+        }
+    }else if(name.contains("Boden_Oben"))
     {
-        name = "OB";
-    }else if(name == "Unterboden")
+        name = "OB" + text_rechts(name, "Boden_Oben");
+        if(name == "OB1")
+        {
+            name = "OB";
+        }
+    }else if(name.contains("Boden_Unten"))
     {
-        name = "UB";
-    }else if(name == "Konstruktionsboden")
+        name = "UB" + text_rechts(name, "Boden_Unten");
+        if(name == "UB1")
+        {
+            name = "UB";
+        }
+    }else if(name.contains("Konstruktionsboden"))
     {
-        name = "KB";
-    }else if(name == "Einlegeboden")
+        name = "KB" + text_rechts(name, "Konstruktionsboden");
+        if(name == "KB0")
+        {
+            name = "KB";
+        }
+    }else if(name.contains("Fachboden"))
     {
-        name = "EB";
-    }else if(name == "Ruckwand")
+        name = "EB" + text_rechts(name, "Fachboden");
+        if(name == "EB0")
+        {
+            name = "EB";
+        }
+    }else if(name.contains("Ruckwand"))
     {
-        name = "RW";
+        name = "RW" + text_rechts(name, "Ruckwand");
+        if(name == "RW1")
+        {
+            name = "RW";
+        }
+    }else if(name.contains("Tur"))
+    {
+        name = "Tuer" + text_rechts(name, "Tur");
     }
     return name;
 }
