@@ -16,11 +16,18 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     text.cpp \
     text_zeilenweise.cpp \
-    umwandeln.cpp
+    umwandeln.cpp \
+    wenndannsonst.cpp \
+    formel.cpp \
+    myfunktion.cpp
 
 HEADERS  += mainwindow.h \
     text.h \
     text_zeilenweise.h \
-    umwandeln.h
+    umwandeln.h \
+    wenndannsonst.h \
+    formel.h \
+    myfunktion.h \
+    myDefines.h
 
 FORMS    += mainwindow.ui

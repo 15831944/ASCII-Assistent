@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#define VERSION "2017.05.16"
+#define VERSION "2017.05.22"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -705,6 +705,12 @@ QString MainWindow::bearbeitung_auf_die_Unterseite(QString dateitext, QString pr
         {
             if(zeile.zeile(3)==" 101")//Rechtecktaschen
             {
+                zeile.zeile_ersaetzen(4, ausdruck_auswerten(zeile.zeile(4)));
+                zeile.zeile_ersaetzen(5, ausdruck_auswerten(zeile.zeile(5)));
+                zeile.zeile_ersaetzen(6, ausdruck_auswerten(zeile.zeile(6)));
+                zeile.zeile_ersaetzen(7, ausdruck_auswerten(zeile.zeile(7)));
+                zeile.zeile_ersaetzen(8, ausdruck_auswerten(zeile.zeile(8)));
+                zeile.zeile_ersaetzen(9, ausdruck_auswerten(zeile.zeile(9)));
                 //Bezugskante:
                 zeile.zeile_ersaetzen(2, " BOT");
                 //Y-Maß neu berechnen:
@@ -714,6 +720,10 @@ QString MainWindow::bearbeitung_auf_die_Unterseite(QString dateitext, QString pr
                 zeile.zeile_ersaetzen(5, double_to_qstring(mass));
             }else if(zeile.zeile(3)==" 102")//Kreistaschen
             {
+                zeile.zeile_ersaetzen(4, ausdruck_auswerten(zeile.zeile(4)));
+                zeile.zeile_ersaetzen(5, ausdruck_auswerten(zeile.zeile(5)));
+                zeile.zeile_ersaetzen(6, ausdruck_auswerten(zeile.zeile(6)));
+                zeile.zeile_ersaetzen(7, ausdruck_auswerten(zeile.zeile(7)));
                 //Bezugskante:
                 zeile.zeile_ersaetzen(2, " BOT");
                 //Y-Maß neu berechnen:
