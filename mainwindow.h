@@ -9,6 +9,7 @@
 #include "text.h"
 #include "text_zeilenweise.h"
 #include "umwandeln.h"
+#include "myfunktion.h"
 
 #ifndef INIFILE
 #define INIFILE "ascii_assistent.ini"
