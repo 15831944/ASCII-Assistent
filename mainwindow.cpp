@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#define VERSION "2017.05.22"
+#define VERSION "2017.05.23"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -13,6 +13,8 @@ MainWindow::MainWindow(QWidget *parent) :
     tz = QDir::separator(); //Systemspezifischer Separator (Linux: Ordner/Unterordner/...)
     setup();
     on_actionInfo_triggered();
+    QPixmap bild("cnc.png");
+    ui->label_bild->setPixmap(bild);
 }
 
 MainWindow::~MainWindow()
@@ -636,9 +638,51 @@ QString MainWindow::bearbeitung_auf_die_Unterseite(QString dateitext, QString pr
     text_zeilenweise programmkopf;
     programmkopf.set_trennzeichen(';');
     programmkopf.set_text(dateitext_tz.zeile(2));
+    //Werkstückbreite prüfen (X-Maß):
+    QString tmp = programmkopf.zeile(2);
+    double breite = tmp.toDouble();
+    if(breite < 50)
+    {
+        QString msg = "Fehler bei Bauteil ";
+        text_zeilenweise tz;
+        tz.set_trennzeichen(';');
+        tz.set_text(dateitext_tz.zeile(3));
+        msg+= tz.zeile(2);
+        msg+= "!\n";
+        msg+= "Breite < 50mm";
+        QMessageBox mb;
+        mb.setText(msg);
+        mb.exec();
+    }else if(breite > 1000)
+    {
+        QString msg = "Fehler bei Bauteil ";
+        text_zeilenweise tz;
+        tz.set_trennzeichen(';');
+        tz.set_text(dateitext_tz.zeile(3));
+        msg+= tz.zeile(2);
+        msg+= "!\n";
+        msg+= "Breite > 1000";
+        QMessageBox mb;
+        mb.setText(msg);
+        mb.exec();
+    }
+
     //Werkstücklänge merken für später (Y-Maß):
-    QString tmp = programmkopf.zeile(3);
+    tmp = programmkopf.zeile(3);
     double laenge = tmp.toDouble();
+    if(laenge < 250)
+    {
+        QString msg = "Fehler bei Bauteil ";
+        text_zeilenweise tz;
+        tz.set_trennzeichen(';');
+        tz.set_text(dateitext_tz.zeile(3));
+        msg+= tz.zeile(2);
+        msg+= "!\n";
+        msg+= "Laenge < 250mm";
+        QMessageBox mb;
+        mb.setText(msg);
+        mb.exec();
+    }
     //Werkstückdicke merken für später (Z-Maß):
     tmp = programmkopf.zeile(4);
     double dicke = tmp.toDouble();
