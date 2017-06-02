@@ -54,6 +54,7 @@ private:
 
     QString bearbeitung_auf_die_Unterseite(QString dateitext, QString prefix);
     QString namen_durch_std_namen_tauschen(QString name);
+    QString ascii_umwandeln_in_ganx(QString asciitext);
 
     //Pfade:
     QString verzeichnis_quelle, verzeichnis_ziel, verzeichnis_ziel_ganx;
