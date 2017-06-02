@@ -11,13 +11,7 @@
 #include "umwandeln.h"
 #include "myfunktion.h"
 
-#ifndef INIFILE
-#define INIFILE "ascii_assistent.ini"
-#endif
 
-#ifndef ASCII
-#define ASCII ".ascii"
-#endif
 
 namespace Ui {
 class MainWindow;
@@ -43,6 +37,11 @@ private slots:
     void on_lineEdit_prefix2_editingFinished();
     void on_actionInfo_triggered();
     void on_checkBox_std_namen_stateChanged();
+    void on_actionWerkzeug_anzeigen_triggered();
+    void on_lineEdit_ziel_ganx_editingFinished();
+    void on_pushButton_ziel_ganx_clicked();
+    void on_checkBox_ascii_stateChanged();
+    void on_checkBox_ganx_stateChanged();
 
 private:
     Ui::MainWindow *ui;
@@ -51,18 +50,21 @@ private:
     text_zeilenweise postfixe;       //Alle Dateinamen ohne Prefix und ohne Dateiendung
     text_zeilenweise dateien_haupt;  //Alle Dateien der Hauptseite, leere Einträge = nur Name ohne Prefix
     text_zeilenweise dateien_neben;  //Alle Dateien der Nebentseite, leere Einträge = nur Name ohne Prefix
+    text_zeilenweise werkzeug;
 
     QString bearbeitung_auf_die_Unterseite(QString dateitext, QString prefix);
     QString namen_durch_std_namen_tauschen(QString name);
+    QString ascii_umwandeln_in_ganx(QString asciitext);
 
     //Pfade:
-    QString verzeichnis_quelle, verzeichnis_ziel;
+    QString verzeichnis_quelle, verzeichnis_ziel, verzeichnis_ziel_ganx;
     //Prefixe:
     QString prefix1, prefix2;
 
     //Checkboxen:
     QString quelldateien_erhalten;
     QString std_namen;
+    QString erzeuge_ascii, erzeuge_ganx;
 
     void setup();
     void schreibe_ini();

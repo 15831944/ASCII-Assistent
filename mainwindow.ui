@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>836</width>
-    <height>513</height>
+    <height>572</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -21,9 +21,9 @@
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>160</y>
+      <y>170</y>
       <width>651</width>
-      <height>321</height>
+      <height>371</height>
      </rect>
     </property>
     <property name="readOnly">
@@ -36,7 +36,7 @@
       <x>10</x>
       <y>0</y>
       <width>821</width>
-      <height>151</height>
+      <height>161</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
@@ -60,12 +60,15 @@
      <item row="1" column="0">
       <widget class="QLabel" name="label_ziel">
        <property name="text">
-        <string>Zielverzeichnis:</string>
+        <string>Zielverzeichniss ascii :</string>
        </property>
       </widget>
      </item>
      <item row="1" column="1">
       <widget class="QLineEdit" name="lineEdit_ziel"/>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="lineEdit_prefix1"/>
      </item>
      <item row="1" column="2">
       <widget class="QPushButton" name="pushButton_ziel">
@@ -74,23 +77,37 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
+     <item row="4" column="1">
+      <widget class="QLineEdit" name="lineEdit_prefix2"/>
+     </item>
+     <item row="3" column="0">
       <widget class="QLabel" name="label_prefix1">
        <property name="text">
         <string>Prefix erste Seite:</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QLineEdit" name="lineEdit_prefix1"/>
-     </item>
-     <item row="3" column="1">
-      <widget class="QLineEdit" name="lineEdit_prefix2"/>
-     </item>
-     <item row="3" column="0">
+     <item row="4" column="0">
       <widget class="QLabel" name="label_prefix2">
        <property name="text">
         <string>Prefix zweite Seite:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_ziel_ganx">
+       <property name="text">
+        <string>Zielverzeichniss ganx :</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="lineEdit_ziel_ganx"/>
+     </item>
+     <item row="2" column="2">
+      <widget class="QPushButton" name="pushButton_ziel_ganx">
+       <property name="text">
+        <string>...</string>
        </property>
       </widget>
      </item>
@@ -100,7 +117,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>390</y>
+      <y>450</y>
       <width>161</width>
       <height>27</height>
      </rect>
@@ -113,7 +130,7 @@
     <property name="geometry">
      <rect>
       <x>11</x>
-      <y>419</y>
+      <y>479</y>
       <width>161</width>
       <height>61</height>
      </rect>
@@ -129,9 +146,9 @@
     <property name="geometry">
      <rect>
       <x>11</x>
-      <y>161</y>
+      <y>169</y>
       <width>166</width>
-      <height>79</height>
+      <height>140</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
@@ -170,13 +187,27 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QCheckBox" name="checkBox_ascii">
+       <property name="text">
+        <string>ascii erzeugen</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="checkBox_ganx">
+       <property name="text">
+        <string>ganx erzeugen</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </widget>
    <widget class="QLabel" name="label_bild">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>250</y>
+      <y>310</y>
       <width>161</width>
       <height>131</height>
      </rect>
@@ -192,7 +223,7 @@
      <x>0</x>
      <y>0</y>
      <width>836</width>
-     <height>18</height>
+     <height>27</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuExtras">
@@ -200,12 +231,18 @@
      <string>Extras</string>
     </property>
     <addaction name="actionInfo"/>
+    <addaction name="actionWerkzeug_anzeigen"/>
    </widget>
    <addaction name="menuExtras"/>
   </widget>
   <action name="actionInfo">
    <property name="text">
     <string>Info</string>
+   </property>
+  </action>
+  <action name="actionWerkzeug_anzeigen">
+   <property name="text">
+    <string>Werkzeug anzeigen</string>
    </property>
   </action>
  </widget>

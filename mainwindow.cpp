@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#define VERSION "2017.05.23"
+#define VERSION "2017.06.02"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -25,6 +25,7 @@ MainWindow::~MainWindow()
 void MainWindow::setup()
 {
     bool inifile_gefunden = false;
+    bool werkzeugdatei_gefunden = false;
     QDir programmordner("./");
     QStringList ordnerinhalt;
     ordnerinhalt = programmordner.entryList(QDir::Files);
@@ -34,6 +35,10 @@ void MainWindow::setup()
         if(name.contains(INIFILE))
         {
             inifile_gefunden = true;
+        }
+        if(name.contains(WERKZEUGDATEI))
+        {
+            werkzeugdatei_gefunden = true;
         }
     }
     if(inifile_gefunden == false)
@@ -91,6 +96,10 @@ void MainWindow::setup()
                 {
                     verzeichnis_ziel = text_mitte(zeile, "verzeichnis_ziel:", "\n");
                     ui->lineEdit_ziel->setText(verzeichnis_ziel);
+                }else if(zeile.contains("verzeichnis_ziel_ganx:"))
+                {
+                    verzeichnis_ziel_ganx = text_mitte(zeile, "verzeichnis_ziel_ganx:", "\n");
+                    ui->lineEdit_ziel_ganx->setText(verzeichnis_ziel_ganx);
                 }else if(zeile.contains("prefix1:"))
                 {
                     prefix1 = text_mitte(zeile, "prefix1:", "\n");
@@ -119,11 +128,63 @@ void MainWindow::setup()
                     {
                         ui->checkBox_std_namen->setChecked(false);
                     }
+                }else if(zeile.contains("erzeuge_ascii:"))
+                {
+                    erzeuge_ascii = text_mitte(zeile, "erzeuge_ascii:", "\n");
+                    if(erzeuge_ascii == "ja")
+                    {
+                        ui->checkBox_ascii->setChecked(true);
+                    }else
+                    {
+                        ui->checkBox_ascii->setChecked(false);
+                    }
+                }else if(zeile.contains("erzeuge_ganx:"))
+                {
+                    erzeuge_ganx = text_mitte(zeile, "erzeuge_ganx:", "\n");
+                    if(erzeuge_ganx == "ja")
+                    {
+                        ui->checkBox_ganx->setChecked(true);
+                    }else
+                    {
+                        ui->checkBox_ganx->setChecked(false);
+                    }
                 }
             }
         }
         file.close();
     }
+
+    if(werkzeugdatei_gefunden == false)
+    {
+        QFile file(WERKZEUGDATEI);
+        if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            QMessageBox::warning(this,"Fehler","Fehler beim Dateizugriff!",QMessageBox::Ok);
+        }else
+        {
+            //----------------------------------------------Tabellenkopf:
+            file.write("Werkzeug-Typ");
+            file.write(";");
+            file.write("Werkzeug-Nummer");
+            file.write(";");
+
+
+            //file.write("\n");
+        }
+        file.close();
+    }else
+    {
+        QFile file(WERKZEUGDATEI);
+        if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            QMessageBox::warning(this,"Fehler","Fehler beim Dateizugriff!",QMessageBox::Ok);
+        }else
+        {
+            werkzeug.set_text(file.readAll());
+        }
+        file.close();
+    }
+
 }
 
 void MainWindow::schreibe_ini()
@@ -135,6 +196,7 @@ void MainWindow::schreibe_ini()
         QMessageBox::warning(this,"Fehler","Fehler beim Dateizugriff!",QMessageBox::Ok);
     }else
     {
+        //-------------------------------------------Verzeichnisse:
         file.write("verzeichnis_quelle:");
         file.write(verzeichnis_quelle.toUtf8());
         file.write("\n");
@@ -143,6 +205,11 @@ void MainWindow::schreibe_ini()
         file.write(verzeichnis_ziel.toUtf8());
         file.write("\n");
 
+        file.write("verzeichnis_ziel_ganx:");
+        file.write(verzeichnis_ziel_ganx.toUtf8());
+        file.write("\n");
+
+        //-------------------------------------------Prefixe:
         file.write("prefix1:");
         file.write(prefix1.toUtf8());
         file.write("\n");
@@ -151,12 +218,21 @@ void MainWindow::schreibe_ini()
         file.write(prefix2.toUtf8());
         file.write("\n");
 
+        //-------------------------------------------Checkboxen:
         file.write("quelldateien_erhalten:");
         file.write(quelldateien_erhalten.toUtf8());
         file.write("\n");
 
         file.write("std_namen:");
         file.write(std_namen.toUtf8());
+        file.write("\n");
+
+        file.write("erzeuge_ascii:");
+        file.write(erzeuge_ascii.toUtf8());
+        file.write("\n");
+
+        file.write("erzeuge_ganx:");
+        file.write(erzeuge_ganx.toUtf8());
         file.write("\n");
     }
     file.close();
@@ -208,6 +284,20 @@ void MainWindow::on_lineEdit_ziel_editingFinished()
         schreibe_ini();
     }
 }
+
+void MainWindow::on_lineEdit_ziel_ganx_editingFinished()
+{
+    QString eingabe = ui->lineEdit_ziel_ganx->text();
+    if(!QDir(eingabe).exists())
+    {
+        QMessageBox::warning(this,"Fehler","Verzeichniss \"" + eingabe + "\" nicht gefunden!",QMessageBox::Ok);
+        ui->lineEdit_ziel_ganx->setText(verzeichnis_ziel_ganx);
+    }else
+    {
+        verzeichnis_ziel_ganx = eingabe;
+        schreibe_ini();
+    }
+}
 //-----------------------------------------------------------------------Pfad-Buttons:
 void MainWindow::on_pushButton_quelle_clicked()
 {
@@ -230,11 +320,26 @@ void MainWindow::on_pushButton_ziel_clicked()
     {
         verzeichnis_ziel = "./";
     }
-    QString tmp = QFileDialog::getExistingDirectory(this, tr("Zielverzeichniss"), verzeichnis_ziel);
+    QString tmp = QFileDialog::getExistingDirectory(this, tr("Zielverzeichniss ascii"), verzeichnis_ziel);
     if(!tmp.isEmpty())
     {
         verzeichnis_ziel = tmp;
         ui->lineEdit_ziel->setText(verzeichnis_ziel);
+        schreibe_ini();
+    }
+}
+
+void MainWindow::on_pushButton_ziel_ganx_clicked()
+{
+    if(verzeichnis_ziel_ganx.isEmpty())
+    {
+        verzeichnis_ziel_ganx = "./";
+    }
+    QString tmp = QFileDialog::getExistingDirectory(this, tr("Zielverzeichniss ganx"), verzeichnis_ziel_ganx);
+    if(!tmp.isEmpty())
+    {
+        verzeichnis_ziel_ganx = tmp;
+        ui->lineEdit_ziel_ganx->setText(verzeichnis_ziel_ganx);
         schreibe_ini();
     }
 }
@@ -287,6 +392,30 @@ void MainWindow::on_checkBox_std_namen_stateChanged()
     }else
     {
         std_namen = "nein";
+    }
+    schreibe_ini();
+}
+
+void MainWindow::on_checkBox_ascii_stateChanged()
+{
+    if(ui->checkBox_ascii->isChecked() == true)
+    {
+        erzeuge_ascii = "ja";
+    }else
+    {
+        erzeuge_ascii = "nein";
+    }
+    schreibe_ini();
+}
+
+void MainWindow::on_checkBox_ganx_stateChanged()
+{
+    if(ui->checkBox_ganx->isChecked() == true)
+    {
+        erzeuge_ganx = "ja";
+    }else
+    {
+        erzeuge_ganx = "nein";
     }
     schreibe_ini();
 }
@@ -474,42 +603,77 @@ void MainWindow::on_pushButton_Start_clicked()
                 neue_Datei_tz.zeile_anhaengen(dateiinhalt_neben_tz.zeile(i));
             }
 
+            //-------------------------------------------------------------------------------------------------
+
             if(std_namen == "ja")
             {
                 postfixe.zeile_ersaetzen(i,namen_durch_std_namen_tauschen(postfixe.zeile(i)));
             }
 
-            QFile datei_neu(verzeichnis_ziel + QDir::separator() + postfixe.zeile(i) + ASCII);
-            if(!datei_neu.open(QIODevice::WriteOnly | QIODevice::Text))
+            if(erzeuge_ascii == "ja")
             {
-                QMessageBox::warning(this,"Abbruch","Fehler beim Dateizugriff!",QMessageBox::Ok);
-                ui->plainTextEdit_Meldungsfenster->setPlainText("Funktion mit Fehlermeldung abgebrochen!");
-                return;
-            }else
-            {
-                datei_neu.write(neue_Datei_tz.get_text().toUtf8().constData());
-                datei_neu.close();
-                if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || i==1)
+                QFile datei_neu(verzeichnis_ziel + QDir::separator() + postfixe.zeile(i) + ASCII);
+                if(!datei_neu.open(QIODevice::WriteOnly | QIODevice::Text))
                 {
-                    ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
-                                                                    ASCII + \
-                                                                    " wurde angelegt.");
+                    QMessageBox::warning(this,"Abbruch","Fehler beim Dateizugriff!",QMessageBox::Ok);
+                    ui->plainTextEdit_Meldungsfenster->setPlainText("Funktion mit Fehlermeldung abgebrochen!");
+                    return;
                 }else
                 {
-                    ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
-                                                                    "\n"+ \
-                                                                    postfixe.zeile(i) + \
-                                                                    ASCII + \
-                                                                    " wurde angelegt.");
-                }
-                if(quelldateien_erhalten=="nein")
-                {
-                    datei_h.remove();
-                    datei_n.remove();
+                    datei_neu.write(neue_Datei_tz.get_text().toUtf8().constData());
+                    datei_neu.close();
+                    if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || ((i==1)&&(erzeuge_ganx != "ja"))  )
+                    {
+                        ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
+                                                                        ASCII + \
+                                                                        " wurde angelegt.");
+                    }else
+                    {
+                        ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
+                                                                        "\n"+ \
+                                                                        postfixe.zeile(i) + \
+                                                                        ASCII + \
+                                                                        " wurde angelegt.");
+                    }
+                    if(quelldateien_erhalten=="nein")
+                    {
+                        datei_h.remove();
+                        datei_n.remove();
+                    }
                 }
             }
-
-
+            if(erzeuge_ganx == "ja")
+            {
+                QFile datei_neu(verzeichnis_ziel_ganx + QDir::separator() + postfixe.zeile(i) + GANX);
+                if(!datei_neu.open(QIODevice::WriteOnly | QIODevice::Text))
+                {
+                    QMessageBox::warning(this,"Abbruch","Fehler beim Dateizugriff!",QMessageBox::Ok);
+                    ui->plainTextEdit_Meldungsfenster->setPlainText("Funktion mit Fehlermeldung abgebrochen!");
+                    return;
+                }else
+                {
+                    datei_neu.write(ascii_umwandeln_in_ganx(neue_Datei_tz.get_text()).toUtf8().constData());
+                    datei_neu.close();
+                    if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || ((i==1)&&(erzeuge_ascii != "ja")))
+                    {
+                        ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
+                                                                        GANX + \
+                                                                        " wurde angelegt.");
+                    }else
+                    {
+                        ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
+                                                                        "\n"+ \
+                                                                        postfixe.zeile(i) + \
+                                                                        GANX + \
+                                                                        " wurde angelegt.");
+                    }
+                    if(quelldateien_erhalten=="nein")
+                    {
+                        datei_h.remove();
+                        datei_n.remove();
+                    }
+                }
+            }
         }else if(dateien_haupt.zeile(i).contains(prefix1))
         {
             QString dateiinhalt;
@@ -533,6 +697,7 @@ void MainWindow::on_pushButton_Start_clicked()
                 datei.close();
             }
 
+            //-------------------------------------------------------------------------------------------------
             dateiinhalt = bearbeitung_auf_die_Unterseite(dateiinhalt, prefix1);
 
             if(std_namen == "ja")
@@ -540,32 +705,66 @@ void MainWindow::on_pushButton_Start_clicked()
                 postfixe.zeile_ersaetzen(i,namen_durch_std_namen_tauschen(postfixe.zeile(i)));
             }
 
-            QFile datei_neu(verzeichnis_ziel + QDir::separator() + postfixe.zeile(i) + ASCII);
-            if(!datei_neu.open(QIODevice::WriteOnly | QIODevice::Text))
+            if(erzeuge_ascii == "ja")
             {
-                QMessageBox::warning(this,"Abbruch","Fehler beim Dateizugriff!",QMessageBox::Ok);
-                ui->plainTextEdit_Meldungsfenster->setPlainText("Funktion mit Fehlermeldung abgebrochen!");
-                return;
-            }else
-            {
-                datei_neu.write(dateiinhalt.toUtf8().constData());
-                datei_neu.close();
-                if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || i==1)
+                QFile datei_neu(verzeichnis_ziel + QDir::separator() + postfixe.zeile(i) + ASCII);
+                if(!datei_neu.open(QIODevice::WriteOnly | QIODevice::Text))
                 {
-                    ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
-                                                                    ASCII + \
-                                                                    " wurde angelegt.");
+                    QMessageBox::warning(this,"Abbruch","Fehler beim Dateizugriff!",QMessageBox::Ok);
+                    ui->plainTextEdit_Meldungsfenster->setPlainText("Funktion mit Fehlermeldung abgebrochen!");
+                    return;
                 }else
                 {
-                    ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
-                                                                    "\n"+ \
-                                                                    postfixe.zeile(i) + \
-                                                                    ASCII + \
-                                                                    " wurde angelegt.");
+                    datei_neu.write(dateiinhalt.toUtf8().constData());
+                    datei_neu.close();
+                    if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || ((i==1)&&(erzeuge_ganx != "ja"))  )
+                    {
+                        ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
+                                                                        ASCII + \
+                                                                        " wurde angelegt.");
+                    }else
+                    {
+                        ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
+                                                                        "\n"+ \
+                                                                        postfixe.zeile(i) + \
+                                                                        ASCII + \
+                                                                        " wurde angelegt.");
+                    }
+                    if(quelldateien_erhalten=="nein")
+                    {
+                        datei.remove();
+                    }
                 }
-                if(quelldateien_erhalten=="nein")
+            }
+            if(erzeuge_ganx == "ja")
+            {
+                QFile datei_neu(verzeichnis_ziel_ganx + QDir::separator() + postfixe.zeile(i) + GANX);
+                if(!datei_neu.open(QIODevice::WriteOnly | QIODevice::Text))
                 {
-                    datei.remove();
+                    QMessageBox::warning(this,"Abbruch","Fehler beim Dateizugriff!",QMessageBox::Ok);
+                    ui->plainTextEdit_Meldungsfenster->setPlainText("Funktion mit Fehlermeldung abgebrochen!");
+                    return;
+                }else
+                {
+                    datei_neu.write(ascii_umwandeln_in_ganx(dateiinhalt).toUtf8().constData());
+                    datei_neu.close();
+                    if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || ((i==1)&&(erzeuge_ascii != "ja")))
+                    {
+                        ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
+                                                                        GANX + \
+                                                                        " wurde angelegt.");
+                    }else
+                    {
+                        ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
+                                                                        "\n"+ \
+                                                                        postfixe.zeile(i) + \
+                                                                        GANX + \
+                                                                        " wurde angelegt.");
+                    }
+                    if(quelldateien_erhalten=="nein")
+                    {
+                        datei.remove();
+                    }
                 }
             }
         }else if(dateien_neben.zeile(i).contains(prefix2))
@@ -591,6 +790,7 @@ void MainWindow::on_pushButton_Start_clicked()
                 datei.close();
             }
 
+            //-------------------------------------------------------------------------------------------------
             dateiinhalt = bearbeitung_auf_die_Unterseite(dateiinhalt, prefix2);
 
             if(std_namen == "ja")
@@ -598,32 +798,66 @@ void MainWindow::on_pushButton_Start_clicked()
                 postfixe.zeile_ersaetzen(i,namen_durch_std_namen_tauschen(postfixe.zeile(i)));
             }
 
-            QFile datei_neu(verzeichnis_ziel + QDir::separator() + postfixe.zeile(i) + ASCII);
-            if(!datei_neu.open(QIODevice::WriteOnly | QIODevice::Text))
+            if(erzeuge_ascii == "ja")
             {
-                QMessageBox::warning(this,"Abbruch","Fehler beim Dateizugriff!",QMessageBox::Ok);
-                ui->plainTextEdit_Meldungsfenster->setPlainText("Funktion mit Fehlermeldung abgebrochen!");
-                return;
-            }else
-            {
-                datei_neu.write(dateiinhalt.toUtf8().constData());
-                datei_neu.close();
-                if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || i==1)
+                QFile datei_neu(verzeichnis_ziel + QDir::separator() + postfixe.zeile(i) + ASCII);
+                if(!datei_neu.open(QIODevice::WriteOnly | QIODevice::Text))
                 {
-                    ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
-                                                                    ASCII + \
-                                                                    " wurde angelegt.");
+                    QMessageBox::warning(this,"Abbruch","Fehler beim Dateizugriff!",QMessageBox::Ok);
+                    ui->plainTextEdit_Meldungsfenster->setPlainText("Funktion mit Fehlermeldung abgebrochen!");
+                    return;
                 }else
                 {
-                    ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
-                                                                    "\n"+ \
-                                                                    postfixe.zeile(i) + \
-                                                                    ASCII + \
-                                                                    " wurde angelegt.");
+                    datei_neu.write(dateiinhalt.toUtf8().constData());
+                    datei_neu.close();
+                    if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || ((i==1)&&(erzeuge_ganx != "ja"))  )
+                    {
+                        ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
+                                                                        ASCII + \
+                                                                        " wurde angelegt.");
+                    }else
+                    {
+                        ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
+                                                                        "\n"+ \
+                                                                        postfixe.zeile(i) + \
+                                                                        ASCII + \
+                                                                        " wurde angelegt.");
+                    }
+                    if(quelldateien_erhalten=="nein")
+                    {
+                        datei.remove();
+                    }
                 }
-                if(quelldateien_erhalten=="nein")
+            }
+            if(erzeuge_ganx == "ja")
+            {
+                QFile datei_neu(verzeichnis_ziel_ganx + QDir::separator() + postfixe.zeile(i) + GANX);
+                if(!datei_neu.open(QIODevice::WriteOnly | QIODevice::Text))
                 {
-                    datei.remove();
+                    QMessageBox::warning(this,"Abbruch","Fehler beim Dateizugriff!",QMessageBox::Ok);
+                    ui->plainTextEdit_Meldungsfenster->setPlainText("Funktion mit Fehlermeldung abgebrochen!");
+                    return;
+                }else
+                {
+                    datei_neu.write(ascii_umwandeln_in_ganx(dateiinhalt).toUtf8().constData());
+                    datei_neu.close();
+                    if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || ((i==1)&&(erzeuge_ascii != "ja")) )
+                    {
+                        ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
+                                                                        GANX + \
+                                                                        " wurde angelegt.");
+                    }else
+                    {
+                        ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
+                                                                        "\n"+ \
+                                                                        postfixe.zeile(i) + \
+                                                                        GANX + \
+                                                                        " wurde angelegt.");
+                    }
+                    if(quelldateien_erhalten=="nein")
+                    {
+                        datei.remove();
+                    }
                 }
             }
         }
@@ -696,36 +930,36 @@ QString MainWindow::bearbeitung_auf_die_Unterseite(QString dateitext, QString pr
         text_zeilenweise zeile;
         zeile.set_trennzeichen(';');
         zeile.set_text(dateitext_tz.zeile(i));
-        if(zeile.zeile(1)=="H")//Bohrungen
+        if(zeile.zeile(1)==BEARBEITUNG_BOHRUNG)
         {
-            if(zeile.zeile(2)==" TOP")
+            if(zeile.zeile(2)==BEZUG_FLAECHE_OBEN_ASCII)
             {
                 //Bezugskante:
-                zeile.zeile_ersaetzen(2, " BOT");
+                zeile.zeile_ersaetzen(2, BEZUG_FLAECHE_UNTEN_ASCII);
                 //Y-Maß neu berechnen:
                 QString mass_alt_qstring = zeile.zeile(5);
                 double mass = mass_alt_qstring.toDouble();
                 mass = laenge - mass;
                 zeile.zeile_ersaetzen(5, double_to_qstring(mass));
-            }else if(zeile.zeile(2)==" REA")//Hinten
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_HINTEN_ASCII)//Hinten
             {
                 //Bezugskante:
-                zeile.zeile_ersaetzen(2, " FRO");//Vorne
+                zeile.zeile_ersaetzen(2, BEZUG_FLAECHE_VORNE_ASCII);//Vorne
                 //Z-Höhe:
                 QString mass_alt_qstring = zeile.zeile(6);
                 double mass = mass_alt_qstring.toDouble();
                 mass = dicke - mass;
                 zeile.zeile_ersaetzen(6, double_to_qstring(mass));
-            }else if(zeile.zeile(2)==" FRO")//Vorne
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_VORNE_ASCII)//Vorne
             {
                 //Bezugskante:
-                zeile.zeile_ersaetzen(2, " REA");//Vorne
+                zeile.zeile_ersaetzen(2, BEZUG_FLAECHE_HINTEN_ASCII);//Vorne
                 //Z-Höhe:
                 QString mass_alt_qstring = zeile.zeile(6);
                 double mass = mass_alt_qstring.toDouble();
                 mass = dicke - mass;
                 zeile.zeile_ersaetzen(6, double_to_qstring(mass));
-            }else if(zeile.zeile(2)==" LEF" ||  zeile.zeile(2)==" RIG")//Links oder Rechts
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_LINKS_ASCII ||  zeile.zeile(2)==BEZUG_FLAECHE_RECHTS_ASCII)//Links oder Rechts
             {
                 //Y-Maß:
                 QString mass_alt_qstring = zeile.zeile(5);
@@ -739,13 +973,13 @@ QString MainWindow::bearbeitung_auf_die_Unterseite(QString dateitext, QString pr
                 zeile.zeile_ersaetzen(6, double_to_qstring(mass));
             }
 
-        }else if(zeile.zeile(1)=="S")//Nuten
+        }else if(zeile.zeile(1)==BEARBEITUNG_NUT)
         {
             //Bezugskante:
-            zeile.zeile_ersaetzen(2, " BOT");
+            zeile.zeile_ersaetzen(2, BEZUG_FLAECHE_UNTEN_ASCII);
             //Angenommen wird, das nur Nuten in Y-Richtung ausgegeben werden (nur das kann die CNC)
             //Angenommen wird, dass nur durchgehende Nuten ausgegeben werden (Nur das kann VW derzeit)
-        }else if(zeile.zeile(1)=="M")//Alle arten von Fräsarbeiten
+        }else if(zeile.zeile(1)==BEARBEITUNG_FRAES)//Alle arten von Fräsarbeiten
         {
             if(zeile.zeile(3)==" 101")//Rechtecktaschen
             {
@@ -756,7 +990,7 @@ QString MainWindow::bearbeitung_auf_die_Unterseite(QString dateitext, QString pr
                 zeile.zeile_ersaetzen(8, ausdruck_auswerten(zeile.zeile(8)));
                 zeile.zeile_ersaetzen(9, ausdruck_auswerten(zeile.zeile(9)));
                 //Bezugskante:
-                zeile.zeile_ersaetzen(2, " BOT");
+                zeile.zeile_ersaetzen(2, BEZUG_FLAECHE_UNTEN_ASCII);
                 //Y-Maß neu berechnen:
                 QString mass_alt_qstring = zeile.zeile(5);
                 double mass = mass_alt_qstring.toDouble();
@@ -769,7 +1003,7 @@ QString MainWindow::bearbeitung_auf_die_Unterseite(QString dateitext, QString pr
                 zeile.zeile_ersaetzen(6, ausdruck_auswerten(zeile.zeile(6)));
                 zeile.zeile_ersaetzen(7, ausdruck_auswerten(zeile.zeile(7)));
                 //Bezugskante:
-                zeile.zeile_ersaetzen(2, " BOT");
+                zeile.zeile_ersaetzen(2, BEZUG_FLAECHE_UNTEN_ASCII);
                 //Y-Maß neu berechnen:
                 QString mass_alt_qstring = zeile.zeile(5);
                 double mass = mass_alt_qstring.toDouble();
@@ -866,6 +1100,117 @@ QString MainWindow::namen_durch_std_namen_tauschen(QString name)
     }
     return name;
 }
+
+void MainWindow::on_actionWerkzeug_anzeigen_triggered()
+{
+    ui->plainTextEdit_Meldungsfenster->setPlainText(werkzeug.get_text());
+}
+
+QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
+{
+    double laenge_y, breite_x, dicke_z;
+    text_zeilenweise tz;
+    tz.set_text(asciitext);
+    text_zeilenweise zeile;
+    zeile.set_trennzeichen(';');
+    //-------------------------
+    zeile.set_text(tz.zeile(2));
+    laenge_y = zeile.zeile(3).toDouble();
+    breite_x = zeile.zeile(2).toDouble();
+    dicke_z = zeile.zeile(4).toDouble();
+
+
+    //-------------------------
+    QString returntext;
+    //-------------------------Vorspann:
+    {
+    returntext  = "<?xml version=\"1.0\" standalone=\"yes\"?>";
+    returntext += "\n";
+    returntext += "<Programm xmlns=\"http://tempuri.org/Programm.xsd\">";
+    returntext += "\n";
+    }
+    //-------------------------Programmkopf:
+    {
+    returntext += "  <PrgrSet>";
+    returntext += "\n";
+    returntext += "    <PrgrName>";
+    zeile.set_text(tz.zeile(3));
+    returntext += zeile.zeile(2);
+    returntext += "</PrgrName>";
+    returntext += "\n";
+    returntext += "    <Description>";
+    returntext += "";                       //Kommentar
+    returntext += "</Description>";
+    returntext += "\n";
+    returntext += "    <wsX>";
+    returntext += double_to_qstring(breite_x);            //Nur zum Testen
+    returntext += "</wsX>";
+    returntext += "\n";
+    returntext += "    <wsY>";
+    returntext += double_to_qstring(laenge_y);
+    returntext += "</wsY>";
+    returntext += "\n";
+    returntext += "    <wsZ>";
+    returntext += double_to_qstring(dicke_z);            //Nur zum Testen
+    returntext += "</wsZ>";
+    returntext += "\n";
+    returntext += "    <DoMF>";
+    returntext += "False";          //Maxitix
+    returntext += "</DoMF>";
+    returntext += "\n";
+    returntext += "    <MFPos>";
+    returntext += "0";              //Position Maxitix
+    returntext += "</MFPos>";
+    returntext += "\n";
+    returntext += "    <MFTool>";
+    returntext += "TO";             //Werkzeug für Maxitix
+    returntext += "</MFTool>";
+    returntext += "\n";
+    returntext += "  </PrgrSet>";
+    returntext += "\n";
+    }
+    //-------------------------2. Vorspann:
+    {
+    returntext += "  <Root>";
+    returntext += "\n";
+    returntext += "    <Version>1.1.0.26</Version>";
+    returntext += "\n";
+    returntext += "    <CreationDate>2017-06-02T09:26:14.9442359+02:00</CreationDate>";
+    returntext += "\n";
+    returntext += "    <CreationApp>ASCII Import - 1.1.0.26</CreationApp>";
+    returntext += "\n";
+    returntext += "    <ModificationApp />";
+    returntext += "\n";
+    returntext += "  </Root>";
+    returntext += "\n";
+    }
+    //-------------------------Bearbeitungen:
+    for(uint i=4 ; i<=tz.zeilenanzahl() ; i++)
+    {
+        zeile.set_text(tz.zeile(i));
+        if(zeile.zeile(1)==BEARBEITUNG_BOHRUNG)
+        {
+
+        }else if(zeile.zeile(1)==BEARBEITUNG_NUT)
+        {
+
+        }else if(zeile.zeile(1)==BEARBEITUNG_FRAES)//Alle arten von Fräsarbeiten
+        {
+
+        }
+    }
+
+
+    //-------------------------Programmende:
+    returntext += "</Programm>";
+
+    return returntext;
+}
+
+
+
+
+
 
 
 
