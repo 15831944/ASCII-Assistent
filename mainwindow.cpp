@@ -25,6 +25,7 @@ MainWindow::~MainWindow()
 void MainWindow::setup()
 {
     bool inifile_gefunden = false;
+    bool werkzeugdatei_gefunden = false;
     QDir programmordner("./");
     QStringList ordnerinhalt;
     ordnerinhalt = programmordner.entryList(QDir::Files);
@@ -34,6 +35,10 @@ void MainWindow::setup()
         if(name.contains(INIFILE))
         {
             inifile_gefunden = true;
+        }
+        if(name.contains(WERKZEUGDATEI))
+        {
+            werkzeugdatei_gefunden = true;
         }
     }
     if(inifile_gefunden == false)
@@ -91,6 +96,10 @@ void MainWindow::setup()
                 {
                     verzeichnis_ziel = text_mitte(zeile, "verzeichnis_ziel:", "\n");
                     ui->lineEdit_ziel->setText(verzeichnis_ziel);
+                }else if(zeile.contains("verzeichnis_ziel_ganx:"))
+                {
+                    verzeichnis_ziel_ganx = text_mitte(zeile, "verzeichnis_ziel_ganx:", "\n");
+                    ui->lineEdit_ziel_ganx->setText(verzeichnis_ziel_ganx);
                 }else if(zeile.contains("prefix1:"))
                 {
                     prefix1 = text_mitte(zeile, "prefix1:", "\n");
@@ -119,11 +128,57 @@ void MainWindow::setup()
                     {
                         ui->checkBox_std_namen->setChecked(false);
                     }
+                }else if(zeile.contains("erzeuge_ascii:"))
+                {
+                    erzeuge_ascii = text_mitte(zeile, "erzeuge_ascii:", "\n");
+                    if(erzeuge_ascii == "ja")
+                    {
+                        ui->checkBox_ascii->setChecked(true);
+                    }else
+                    {
+                        ui->checkBox_ascii->setChecked(false);
+                    }
+                }else if(zeile.contains("erzeuge_ganx:"))
+                {
+                    erzeuge_ganx = text_mitte(zeile, "erzeuge_ganx:", "\n");
+                    if(erzeuge_ganx == "ja")
+                    {
+                        ui->checkBox_ganx->setChecked(true);
+                    }else
+                    {
+                        ui->checkBox_ganx->setChecked(false);
+                    }
                 }
             }
         }
         file.close();
     }
+
+    if(werkzeugdatei_gefunden == false)
+    {
+        QFile file(WERKZEUGDATEI);
+        if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            QMessageBox::warning(this,"Fehler","Fehler beim Dateizugriff!",QMessageBox::Ok);
+        }else
+        {
+            //Tabellenkopf:
+            file.write("erster eintrag;zweiter;dritter");
+        }
+        file.close();
+    }else
+    {
+        QFile file(WERKZEUGDATEI);
+        if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            QMessageBox::warning(this,"Fehler","Fehler beim Dateizugriff!",QMessageBox::Ok);
+        }else
+        {
+            werkzeug.set_text(file.readAll());
+        }
+        file.close();
+    }
+
 }
 
 void MainWindow::schreibe_ini()
@@ -135,6 +190,7 @@ void MainWindow::schreibe_ini()
         QMessageBox::warning(this,"Fehler","Fehler beim Dateizugriff!",QMessageBox::Ok);
     }else
     {
+        //-------------------------------------------Verzeichnisse:
         file.write("verzeichnis_quelle:");
         file.write(verzeichnis_quelle.toUtf8());
         file.write("\n");
@@ -143,6 +199,11 @@ void MainWindow::schreibe_ini()
         file.write(verzeichnis_ziel.toUtf8());
         file.write("\n");
 
+        file.write("verzeichnis_ziel_ganx:");
+        file.write(verzeichnis_ziel_ganx.toUtf8());
+        file.write("\n");
+
+        //-------------------------------------------Prefixe:
         file.write("prefix1:");
         file.write(prefix1.toUtf8());
         file.write("\n");
@@ -151,12 +212,21 @@ void MainWindow::schreibe_ini()
         file.write(prefix2.toUtf8());
         file.write("\n");
 
+        //-------------------------------------------Checkboxen:
         file.write("quelldateien_erhalten:");
         file.write(quelldateien_erhalten.toUtf8());
         file.write("\n");
 
         file.write("std_namen:");
         file.write(std_namen.toUtf8());
+        file.write("\n");
+
+        file.write("erzeuge_ascii:");
+        file.write(erzeuge_ascii.toUtf8());
+        file.write("\n");
+
+        file.write("erzeuge_ganx:");
+        file.write(erzeuge_ganx.toUtf8());
         file.write("\n");
     }
     file.close();
@@ -208,6 +278,20 @@ void MainWindow::on_lineEdit_ziel_editingFinished()
         schreibe_ini();
     }
 }
+
+void MainWindow::on_lineEdit_ziel_ganx_editingFinished()
+{
+    QString eingabe = ui->lineEdit_ziel_ganx->text();
+    if(!QDir(eingabe).exists())
+    {
+        QMessageBox::warning(this,"Fehler","Verzeichniss \"" + eingabe + "\" nicht gefunden!",QMessageBox::Ok);
+        ui->lineEdit_ziel_ganx->setText(verzeichnis_ziel_ganx);
+    }else
+    {
+        verzeichnis_ziel_ganx = eingabe;
+        schreibe_ini();
+    }
+}
 //-----------------------------------------------------------------------Pfad-Buttons:
 void MainWindow::on_pushButton_quelle_clicked()
 {
@@ -230,11 +314,26 @@ void MainWindow::on_pushButton_ziel_clicked()
     {
         verzeichnis_ziel = "./";
     }
-    QString tmp = QFileDialog::getExistingDirectory(this, tr("Zielverzeichniss"), verzeichnis_ziel);
+    QString tmp = QFileDialog::getExistingDirectory(this, tr("Zielverzeichniss ascii"), verzeichnis_ziel);
     if(!tmp.isEmpty())
     {
         verzeichnis_ziel = tmp;
         ui->lineEdit_ziel->setText(verzeichnis_ziel);
+        schreibe_ini();
+    }
+}
+
+void MainWindow::on_pushButton_ziel_ganx_clicked()
+{
+    if(verzeichnis_ziel_ganx.isEmpty())
+    {
+        verzeichnis_ziel_ganx = "./";
+    }
+    QString tmp = QFileDialog::getExistingDirectory(this, tr("Zielverzeichniss ganx"), verzeichnis_ziel_ganx);
+    if(!tmp.isEmpty())
+    {
+        verzeichnis_ziel_ganx = tmp;
+        ui->lineEdit_ziel_ganx->setText(verzeichnis_ziel_ganx);
         schreibe_ini();
     }
 }
@@ -287,6 +386,30 @@ void MainWindow::on_checkBox_std_namen_stateChanged()
     }else
     {
         std_namen = "nein";
+    }
+    schreibe_ini();
+}
+
+void MainWindow::on_checkBox_ascii_stateChanged()
+{
+    if(ui->checkBox_ascii->isChecked() == true)
+    {
+        erzeuge_ascii = "ja";
+    }else
+    {
+        erzeuge_ascii = "nein";
+    }
+    schreibe_ini();
+}
+
+void MainWindow::on_checkBox_ganx_stateChanged()
+{
+    if(ui->checkBox_ganx->isChecked() == true)
+    {
+        erzeuge_ganx = "ja";
+    }else
+    {
+        erzeuge_ganx = "nein";
     }
     schreibe_ini();
 }
@@ -866,6 +989,18 @@ QString MainWindow::namen_durch_std_namen_tauschen(QString name)
     }
     return name;
 }
+
+void MainWindow::on_actionWerkzeug_anzeigen_triggered()
+{
+    ui->plainTextEdit_Meldungsfenster->setPlainText(werkzeug.get_text());
+}
+
+
+
+
+
+
+
 
 
 
