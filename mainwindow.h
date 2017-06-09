@@ -66,9 +66,14 @@ private:
     QString std_namen;
     QString erzeuge_ascii, erzeuge_ganx;
 
+    //Variablen:
+    double bezugsmass;
+
+    //Funktionen:
     void setup();
     void schreibe_ini();
     void dateien_erfassen();
+    QString get_wkz_nummer(QString wkz_typ, double wkz_dm, double bearbeitungstiefe);
 
 };
 
