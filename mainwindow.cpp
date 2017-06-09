@@ -24,6 +24,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::setup()
 {
+    bezugsmass = 40;
     bool inifile_gefunden = false;
     bool werkzeugdatei_gefunden = false;
     QDir programmordner("./");
@@ -163,11 +164,18 @@ void MainWindow::setup()
         }else
         {
             //----------------------------------------------Tabellenkopf:
-            file.write("Werkzeug-Typ");
+            file.write("Typ");
             file.write(";");
-            file.write("Werkzeug-Nummer");
+            file.write("Nummer");
             file.write(";");
-
+            file.write("Durchmesser");
+            file.write(";");
+            file.write("Nutzlaenge");
+            file.write(";");
+            file.write(" ");
+            file.write(";");
+            file.write(" ");
+            file.write(";");
 
             //file.write("\n");
         }
@@ -1109,6 +1117,7 @@ void MainWindow::on_actionWerkzeug_anzeigen_triggered()
 QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
 {
     double laenge_y, breite_x, dicke_z;
+    double refmass = 40;
     text_zeilenweise tz;
     tz.set_text(asciitext);
     text_zeilenweise zeile;
@@ -1122,7 +1131,7 @@ QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
 
     //-------------------------
     QString returntext;
-    //-------------------------Vorspann:
+    //-------------------------1.Vorspann:
     {
     returntext  = "<?xml version=\"1.0\" standalone=\"yes\"?>";
     returntext += "\n";
@@ -1184,13 +1193,360 @@ QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
     returntext += "  </Root>";
     returntext += "\n";
     }
-    //-------------------------Bearbeitungen:
+    //-------------------------Bearbeitungen <PrgrFileWork>:
     for(uint i=4 ; i<=tz.zeilenanzahl() ; i++)
     {
         zeile.set_text(tz.zeile(i));
         if(zeile.zeile(1)==BEARBEITUNG_BOHRUNG)
         {
+            double x = zeile.zeile(4).toDouble();
+            double y = zeile.zeile(5).toDouble();
+            double z = zeile.zeile(6).toDouble();
+            double dm = zeile.zeile(7).toDouble();
 
+            if(zeile.zeile(2)==BEZUG_FLAECHE_OBEN_ASCII)
+            {
+                //x = Breite
+                //y = Länge
+                //z = Tiefe
+                returntext += "  <PrgrFileWork>";
+                returntext += "\n";
+                returntext += "    <CntID>";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</CntID>";
+                returntext += "\n";
+                returntext += "    <Plane>Top</Plane>";
+                returntext += "\n";
+                //----------------------Bezugskante festlegen:
+                QString bezug = BEZUG_REF_OBEN_LINKS;
+                //y < 40 -> TL
+                //Länge - y < 40 ->BL
+                if(laenge_y - y < bezugsmass)
+                {
+                    bezug = BEZUG_REF_UNTEN_LINKS;
+                }
+                returntext += "    <Ref>";
+                returntext += bezug;
+                returntext += "</Ref>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Typ>B</Typ>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <X>";
+                returntext += double_to_qstring(x);
+                returntext += "</X>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Y>";
+                returntext += double_to_qstring(y);
+                returntext += "</Y>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Z>";
+                returntext += double_to_qstring(0);
+                returntext += "</Z>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Diameter>";
+                returntext += double_to_qstring(dm);
+                returntext += "</Diameter>";
+                returntext += "\n";
+                //----------------------
+                returntext += "   <Depth>";
+                returntext += double_to_qstring(z);
+                returntext += "</Depth>";
+                returntext += "\n";
+                //----------------------Werkzeugnummer:
+                returntext += "    <Tool>";
+
+                QString tnummer = get_wkz_nummer(WKZ_TYP_BOHRER, dm, z);
+                if(tnummer.isEmpty())
+                {
+                    QString msg = "Fehler!\nKein Bohrer im Werkzeugmagazin für:\n" + zeile.get_text();
+                    QMessageBox mb;
+                    mb.setText(msg);
+                    mb.exec();
+                    return msg;
+                }
+                returntext += tnummer;
+                returntext += "</Tool>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <OldID>";
+                returntext += "Top";
+                returntext += "\\";
+                returntext += bezug;
+                returntext += "\\";
+                returntext += "B-";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</OldID>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <KleiGeTei>";    //Tiefe???
+                returntext += double_to_qstring(z);
+                returntext += "</KleiGeTei>";
+                returntext += "\n";
+                //----------------------
+                returntext += "  </PrgrFileWork>";
+                returntext += "\n";
+
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_UNTEN_ASCII)
+            {
+                //x = Breite
+                //y = Länge
+                //z = Tiefe
+                returntext += "  <PrgrFileWork>";
+                returntext += "\n";
+                returntext += "    <CntID>";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</CntID>";
+                returntext += "\n";
+                returntext += "    <Plane>Bottom</Plane>";
+                returntext += "\n";
+                //----------------------Bezugskante festlegen:
+                QString bezug = BEZUG_REF_OBEN_LINKS;
+                //y < 40 -> TL
+                //Länge - y < 40 ->BL
+                if(laenge_y - y < bezugsmass)
+                {
+                    bezug = BEZUG_REF_UNTEN_LINKS;
+                }
+                returntext += "    <Ref>";
+                returntext += bezug;
+                returntext += "</Ref>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Typ>B</Typ>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <X>";
+                returntext += double_to_qstring(x);
+                returntext += "</X>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Y>";
+                returntext += double_to_qstring(y);
+                returntext += "</Y>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Z>";
+                returntext += double_to_qstring(0);
+                returntext += "</Z>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Diameter>";
+                returntext += double_to_qstring(dm);
+                returntext += "</Diameter>";
+                returntext += "\n";
+                //----------------------
+                returntext += "   <Depth>";
+                returntext += double_to_qstring(z);
+                returntext += "</Depth>";
+                returntext += "\n";
+                //----------------------Werkzeugnummer:
+                returntext += "    <Tool>";
+
+                QString tnummer = get_wkz_nummer(WKZ_TYP_BOHRER, dm, z);
+                if(tnummer.isEmpty())
+                {
+                    QString msg = "Fehler!\nKein Bohrer im Werkzeugmagazin für:\n" + zeile.get_text();
+                    QMessageBox mb;
+                    mb.setText(msg);
+                    mb.exec();
+                    return msg;
+                }
+                returntext += tnummer;
+                returntext += "</Tool>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <OldID>";
+                returntext += "Bottom";
+                returntext += "\\";
+                returntext += bezug;
+                returntext += "\\";
+                returntext += "B-";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</OldID>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <KleiGeTei>";    //Tiefe???
+                returntext += double_to_qstring(z);
+                returntext += "</KleiGeTei>";
+                returntext += "\n";
+                //----------------------
+                returntext += "  </PrgrFileWork>";
+                returntext += "\n";
+
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_LINKS_ASCII)
+            {
+                //x = Tiefe
+                //y = Y-Pos
+                //z = Z-Pos
+                returntext += "  <PrgrFileWork>";
+                returntext += "\n";
+                returntext += "    <CntID>";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemen einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</CntID>";
+                returntext += "\n";
+                returntext += "    <Plane>Left</Plane>";
+                returntext += "\n";
+                //----------------------Bezugskante festlegen:
+                QString bezug = BEZUG_REF_OBEN_LINKS;
+                returntext += "    <Ref>";
+                returntext += bezug;
+                returntext += "</Ref>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Typ>B</Typ>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <X>";
+                returntext += double_to_qstring(0);
+                returntext += "</X>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Y>";
+                returntext += double_to_qstring(y);
+                returntext += "</Y>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Z>";
+                returntext += double_to_qstring(z);
+                returntext += "</Z>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Diameter>";
+                returntext += double_to_qstring(dm);
+                returntext += "</Diameter>";
+                returntext += "\n";
+                //----------------------
+                returntext += "   <Depth>";
+                returntext += double_to_qstring(x);
+                returntext += "</Depth>";
+                returntext += "\n";
+                //----------------------Werkzeugnummer:
+                returntext += "    <Tool>";
+
+                QString tnummer = get_wkz_nummer(WKZ_TYP_BOHRER, dm, x);
+                if(tnummer.isEmpty())
+                {
+                    QString msg = "Fehler!\nKein Bohrer im Werkzeugmagazin für:\n" + zeile.get_text();
+                    QMessageBox mb;
+                    mb.setText(msg);
+                    mb.exec();
+                    return msg;
+                }
+                returntext += tnummer;
+                returntext += "</Tool>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <OldID>";
+                returntext += "Left";
+                returntext += "\\";
+                returntext += bezug;
+                returntext += "\\";
+                returntext += "B-";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</OldID>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <KleiGeTei>";    //Tiefe???
+                returntext += double_to_qstring(x);
+                returntext += "</KleiGeTei>";
+                returntext += "\n";
+                //----------------------
+                returntext += "  </PrgrFileWork>";
+                returntext += "\n";
+
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_RECHTS_ASCII)
+            {
+                //x = Tiefe
+                //y = Y-Pos
+                //z = Z-Pos
+                returntext += "  <PrgrFileWork>";
+                returntext += "\n";
+                returntext += "    <CntID>";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemen einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</CntID>";
+                returntext += "\n";
+                returntext += "    <Plane>Right</Plane>";
+                returntext += "\n";
+                //----------------------Bezugskante festlegen:
+                QString bezug = BEZUG_REF_OBEN_RECHTS;
+                returntext += "    <Ref>";
+                returntext += bezug;
+                returntext += "</Ref>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Typ>B</Typ>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <X>";
+                returntext += double_to_qstring(0);
+                returntext += "</X>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Y>";
+                returntext += double_to_qstring(y);
+                returntext += "</Y>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Z>";
+                returntext += double_to_qstring(z);
+                returntext += "</Z>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Diameter>";
+                returntext += double_to_qstring(dm);
+                returntext += "</Diameter>";
+                returntext += "\n";
+                //----------------------
+                returntext += "   <Depth>";
+                returntext += double_to_qstring(x);
+                returntext += "</Depth>";
+                returntext += "\n";
+                //----------------------Werkzeugnummer:
+                returntext += "    <Tool>";
+
+                QString tnummer = get_wkz_nummer(WKZ_TYP_BOHRER, dm, x);
+                if(tnummer.isEmpty())
+                {
+                    QString msg = "Fehler!\nKein Bohrer im Werkzeugmagazin für:\n" + zeile.get_text();
+                    QMessageBox mb;
+                    mb.setText(msg);
+                    mb.exec();
+                    return msg;
+                }
+                returntext += tnummer;
+                returntext += "</Tool>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <OldID>";
+                returntext += "Right";
+                returntext += "\\";
+                returntext += bezug;
+                returntext += "\\";
+                returntext += "B-";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</OldID>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <KleiGeTei>";    //Tiefe???
+                returntext += double_to_qstring(x);
+                returntext += "</KleiGeTei>";
+                returntext += "\n";
+                //----------------------
+                returntext += "  </PrgrFileWork>";
+                returntext += "\n";
+
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_VORNE_ASCII)
+            {
+
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_HINTEN_ASCII)
+            {
+
+            }
         }else if(zeile.zeile(1)==BEARBEITUNG_NUT)
         {
 
@@ -1200,6 +1556,439 @@ QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
         }
     }
 
+    //-------------------------Bearbeitungen <PrgrFile>:
+    for(uint i=4 ; i<=tz.zeilenanzahl() ; i++)
+    {
+        zeile.set_text(tz.zeile(i));
+        if(zeile.zeile(1)==BEARBEITUNG_BOHRUNG)
+        {
+            double x = zeile.zeile(4).toDouble();
+            double y = zeile.zeile(5).toDouble();
+            double z = zeile.zeile(6).toDouble();
+            double dm = zeile.zeile(7).toDouble();
+
+            if(zeile.zeile(2)==BEZUG_FLAECHE_OBEN_ASCII)
+            {
+                //x = Breite
+                //y = Länge
+                //z = Tiefe
+                returntext += "  <PrgrFile>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <CntID>";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</CntID>";
+                returntext += "\n";
+                //----------------------
+                QString bezug = BEZUG_REF_OBEN_LINKS;
+                //y < 40 -> TL
+                //Länge - y < 40 ->BL
+                if(laenge_y - y < bezugsmass)
+                {
+                    bezug = BEZUG_REF_UNTEN_LINKS;
+                    y = laenge_y - y;
+                }
+                //----------------------
+                returntext += "    <ID>";
+                returntext += "Top";
+                returntext += "\\";
+                returntext += bezug;
+                returntext += "\\";
+                returntext += "B-";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</ID>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefVal1>";
+                returntext += double_to_qstring(y).replace(".",",");
+                returntext += "</RefVal1>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefVal2>";
+                returntext += double_to_qstring(x).replace(".",",");
+                returntext += "</RefVal2>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefLVL>";
+                returntext += double_to_qstring(0).replace(".",",");
+                returntext += "</RefLVL>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Diameter>";
+                returntext += double_to_qstring(dm).replace(".",",");
+                returntext += "</Diameter>";
+                returntext += "\n";
+                //----------------------
+                returntext += "   <Depth>";
+                returntext += double_to_qstring(z).replace(".",",");
+                returntext += "</Depth>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DoDbl>false</DoDbl>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <UsedDbl>ERR</UsedDbl>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblB>true</DblB>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblL>false</DblL>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblE>false</DblE>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DoMF>false</DoMF>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <MFLage>B</MFLage>";
+                returntext += "\n";
+                //----------------------
+                //----------------------Werkzeugnummer:
+                returntext += "    <Tool>";
+
+                QString tnummer = get_wkz_nummer(WKZ_TYP_BOHRER, dm, z);
+                if(tnummer.isEmpty())
+                {
+                    QString msg = "Fehler!\nKein Bohrer im Werkzeugmagazin für:\n" + zeile.get_text();
+                    QMessageBox mb;
+                    mb.setText(msg);
+                    mb.exec();
+                    return msg;
+                }
+                returntext += tnummer;
+                returntext += "</Tool>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Cyclic>1</Cyclic>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <ImageKey>B</ImageKey>>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Step>1</Step>";
+                returntext += "\n";
+                //----------------------
+                returntext += "  </PrgrFile>";
+                returntext += "\n";
+
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_UNTEN_ASCII)
+            {
+                //x = Breite
+                //y = Länge
+                //z = Tiefe
+                returntext += "  <PrgrFile>";
+                returntext += "\n";
+                returntext += "    <CntID>";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</CntID>";
+                returntext += "\n";
+                //----------------------
+                QString bezug = BEZUG_REF_OBEN_LINKS;
+                //y < 40 -> TL
+                //Länge - y < 40 ->BL
+                if(laenge_y - y < bezugsmass)
+                {
+                    bezug = BEZUG_REF_UNTEN_LINKS;
+                    y = laenge_y - y;
+                }
+                //----------------------
+                returntext += "    <ID>";
+                returntext += "Bottom";
+                returntext += "\\";
+                returntext += bezug;
+                returntext += "\\";
+                returntext += "B-";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</ID>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefVal1>";
+                returntext += double_to_qstring(y).replace(".",",");
+                returntext += "</RefVal1>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefVal2>";
+                returntext += double_to_qstring(x).replace(".",",");
+                returntext += "</RefVal2>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefLVL>";
+                returntext += double_to_qstring(0).replace(".",",");
+                returntext += "</RefLVL>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Diameter>";
+                returntext += double_to_qstring(dm).replace(".",",");
+                returntext += "</Diameter>";
+                returntext += "\n";
+                //----------------------
+                returntext += "   <Depth>";
+                returntext += double_to_qstring(z).replace(".",",");
+                returntext += "</Depth>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DoDbl>false</DoDbl>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <UsedDbl>ERR</UsedDbl>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblB>true</DblB>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblL>false</DblL>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblE>false</DblE>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DoMF>false</DoMF>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <MFLage>B</MFLage>";
+                returntext += "\n";
+                //----------------------
+                //----------------------Werkzeugnummer:
+                returntext += "    <Tool>";
+
+                QString tnummer = get_wkz_nummer(WKZ_TYP_BOHRER, dm, z);
+                if(tnummer.isEmpty())
+                {
+                    QString msg = "Fehler!\nKein Bohrer im Werkzeugmagazin für:\n" + zeile.get_text();
+                    QMessageBox mb;
+                    mb.setText(msg);
+                    mb.exec();
+                    return msg;
+                }
+                returntext += tnummer;
+                returntext += "</Tool>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Cyclic>1</Cyclic>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <ImageKey>B</ImageKey>>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Step>1</Step>";
+                returntext += "\n";
+                //----------------------
+                returntext += "  </PrgrFile>";
+                returntext += "\n";
+
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_LINKS_ASCII)
+            {
+                //x = Tiefe
+                //y = Y-Pos
+                //z = Z-Pos
+                returntext += "  <PrgrFile>";
+                returntext += "\n";
+                returntext += "    <CntID>";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</CntID>";
+                returntext += "\n";
+                //----------------------
+                QString bezug = BEZUG_REF_OBEN_LINKS;
+                //----------------------
+                returntext += "    <ID>";
+                returntext += "Left";
+                returntext += "\\";
+                returntext += bezug;
+                returntext += "\\";
+                returntext += "B-";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</ID>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefVal1>";
+                returntext += double_to_qstring(y).replace(".",",");
+                returntext += "</RefVal1>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefVal2>";
+                returntext += double_to_qstring(z).replace(".",",");
+                returntext += "</RefVal2>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefLVL>";
+                returntext += double_to_qstring(0).replace(".",",");
+                returntext += "</RefLVL>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Diameter>";
+                returntext += double_to_qstring(dm).replace(".",",");
+                returntext += "</Diameter>";
+                returntext += "\n";
+                //----------------------
+                returntext += "   <Depth>";
+                returntext += double_to_qstring(x).replace(".",",");
+                returntext += "</Depth>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DoDbl>false</DoDbl>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <UsedDbl>ERR</UsedDbl>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblB>true</DblB>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblL>false</DblL>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblE>false</DblE>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DoMF>false</DoMF>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <MFLage>B</MFLage>";
+                returntext += "\n";
+                //----------------------
+                //----------------------Werkzeugnummer:
+                returntext += "    <Tool>";
+
+                QString tnummer = get_wkz_nummer(WKZ_TYP_BOHRER, dm, x);
+                if(tnummer.isEmpty())
+                {
+                    QString msg = "Fehler!\nKein Bohrer im Werkzeugmagazin für:\n" + zeile.get_text();
+                    QMessageBox mb;
+                    mb.setText(msg);
+                    mb.exec();
+                    return msg;
+                }
+                returntext += tnummer;
+                returntext += "</Tool>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Cyclic>1</Cyclic>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <ImageKey>B</ImageKey>>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Step>1</Step>";
+                returntext += "\n";
+                //----------------------
+                returntext += "  </PrgrFile>";
+                returntext += "\n";
+
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_RECHTS_ASCII)
+            {
+                //x = Tiefe
+                //y = Y-Pos
+                //z = Z-Pos
+                returntext += "  <PrgrFile>";
+                returntext += "\n";
+                returntext += "    <CntID>";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</CntID>";
+                returntext += "\n";
+                //----------------------
+                QString bezug = BEZUG_REF_OBEN_RECHTS;
+                //----------------------
+                returntext += "    <ID>";
+                returntext += "Right";
+                returntext += "\\";
+                returntext += bezug;
+                returntext += "\\";
+                returntext += "B-";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</ID>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefVal1>";
+                returntext += double_to_qstring(y).replace(".",",");
+                returntext += "</RefVal1>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefVal2>";
+                returntext += double_to_qstring(z).replace(".",",");
+                returntext += "</RefVal2>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefLVL>";
+                returntext += double_to_qstring(0).replace(".",",");
+                returntext += "</RefLVL>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Diameter>";
+                returntext += double_to_qstring(dm).replace(".",",");
+                returntext += "</Diameter>";
+                returntext += "\n";
+                //----------------------
+                returntext += "   <Depth>";
+                returntext += double_to_qstring(x).replace(".",",");
+                returntext += "</Depth>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DoDbl>false</DoDbl>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <UsedDbl>ERR</UsedDbl>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblB>true</DblB>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblL>false</DblL>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblE>false</DblE>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DoMF>false</DoMF>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <MFLage>B</MFLage>";
+                returntext += "\n";
+                //----------------------
+                //----------------------Werkzeugnummer:
+                returntext += "    <Tool>";
+
+                QString tnummer = get_wkz_nummer(WKZ_TYP_BOHRER, dm, x);
+                if(tnummer.isEmpty())
+                {
+                    QString msg = "Fehler!\nKein Bohrer im Werkzeugmagazin für:\n" + zeile.get_text();
+                    QMessageBox mb;
+                    mb.setText(msg);
+                    mb.exec();
+                    return msg;
+                }
+                returntext += tnummer;
+                returntext += "</Tool>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Cyclic>1</Cyclic>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <ImageKey>B</ImageKey>>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Step>1</Step>";
+                returntext += "\n";
+                //----------------------
+                returntext += "  </PrgrFile>";
+                returntext += "\n";
+
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_VORNE_ASCII)
+            {
+
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_HINTEN_ASCII)
+            {
+
+            }
+        }else if(zeile.zeile(1)==BEARBEITUNG_NUT)
+        {
+
+        }else if(zeile.zeile(1)==BEARBEITUNG_FRAES)//Alle arten von Fräsarbeiten
+        {
+
+        }
+    }
 
     //-------------------------Programmende:
     returntext += "</Programm>";
@@ -1207,7 +1996,29 @@ QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
     return returntext;
 }
 
+QString MainWindow::get_wkz_nummer(QString wkz_typ, double wkz_dm, double bearbeitungstiefe)
+{
+    QString returntext = "";
+    text_zeilenweise zeile;
+    zeile.set_trennzeichen('\t');
 
+    for(uint i = 2; i<=werkzeug.zeilenanzahl() ;i++)
+    {
+        zeile.set_text(werkzeug.zeile(i));
+
+        if(zeile.zeile(1) == wkz_typ)
+        {
+            if(zeile.zeile(3).toDouble() == wkz_dm)
+            {
+                if(zeile.zeile(4).toDouble() > bearbeitungstiefe)
+                {
+                    returntext = zeile.zeile(2);
+                }
+            }
+        }
+    }
+    return returntext;
+}
 
 
 

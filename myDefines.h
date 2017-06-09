@@ -31,10 +31,22 @@
 
 
 //--------------------------------------Bezüge der Bearbeitungen in der ganx-Datei:
+#define BEZUG_FLAECHE_OBEN_GANX      ""
+#define BEZUG_FLAECHE_UNTEN_GANX     "Bottom"
+#define BEZUG_FLAECHE_LINKS_GANX     ""
+#define BEZUG_FLAECHE_RECHTS_GANX    ""
+#define BEZUG_FLAECHE_VORNE_GANX     ""
+#define BEZUG_FLAECHE_HINTEN_GANX    ""
+
+#define BEZUG_REF_OBEN_LINKS        "TL"
+#define BEZUG_REF_OBEN_RECHTS       "TR"
+#define BEZUG_REF_UNTEN_LINKS       "BL"
+#define BEZUG_REF_UNTEN_RECHTS      "BR"
 
 
-
-
-
+//--------------------------------------Werkzeug:
+#define WKZ_TYP_BOHRER              "B"
+#define WKZ_TYP_SAEGE               "S"
+#define WKZ_TYP_FRAESER             "M"
 
 #endif // MYDEFINES_H
