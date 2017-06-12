@@ -73,7 +73,8 @@ private:
     void setup();
     void schreibe_ini();
     void dateien_erfassen();
-    QString get_wkz_nummer(QString wkz_typ, double wkz_dm, double bearbeitungstiefe);
+    QString get_wkz_nummer(QString wkz_typ, double wkz_dm = 0, double bearbeitungstiefe = 0);
+    QString get_wkz_dm(QString wkz_nr);
 
 };
 
