@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#define VERSION "2017.06.12"
+#define VERSION "2017.06.13"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -165,17 +165,17 @@ void MainWindow::setup()
         {
             //----------------------------------------------Tabellenkopf:
             file.write("Typ");
-            file.write(";");
+            file.write("\t");
             file.write("Nummer");
-            file.write(";");
+            file.write("\t");
             file.write("Durchmesser");
-            file.write(";");
+            file.write("\t");
             file.write("Nutzlaenge");
-            file.write(";");
+            file.write("\t");
+            file.write("Vorschub");
+            file.write("\t");
             file.write(" ");
-            file.write(";");
-            file.write(" ");
-            file.write(";");
+
 
             //file.write("\n");
         }
@@ -612,6 +612,8 @@ void MainWindow::on_pushButton_Start_clicked()
             }
 
             //-------------------------------------------------------------------------------------------------
+            neue_Datei_tz = ascii_optimieren(neue_Datei_tz);
+            //-------------------------------------------------------------------------------------------------
 
             if(std_namen == "ja")
             {
@@ -660,25 +662,46 @@ void MainWindow::on_pushButton_Start_clicked()
                     return;
                 }else
                 {
-                    datei_neu.write(ascii_umwandeln_in_ganx(neue_Datei_tz.get_text()).toUtf8().constData());
-                    datei_neu.close();
-                    if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || ((i==1)&&(erzeuge_ascii != "ja")))
+                    QString msg = ascii_umwandeln_in_ganx(neue_Datei_tz.get_text());
+                    if(msg.contains("Fehler!"))
                     {
-                        ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
-                                                                        GANX + \
-                                                                        " wurde angelegt.");
+                        if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || ((i==1)&&(erzeuge_ascii != "ja")))
+                        {
+                            ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
+                                                                            GANX + \
+                                                                            " ----> " + \
+                                                                            msg);
+                        }else
+                        {
+                            ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
+                                                                            "\n"+ \
+                                                                            postfixe.zeile(i) + \
+                                                                            GANX + \
+                                                                            " ----> " + \
+                                                                            msg);
+                        }
                     }else
                     {
-                        ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
-                                                                        "\n"+ \
-                                                                        postfixe.zeile(i) + \
-                                                                        GANX + \
-                                                                        " wurde angelegt.");
-                    }
-                    if(quelldateien_erhalten=="nein")
-                    {
-                        datei_h.remove();
-                        datei_n.remove();
+                        datei_neu.write(msg.toUtf8().constData());
+                        datei_neu.close();
+                        if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || ((i==1)&&(erzeuge_ascii != "ja")))
+                        {
+                            ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
+                                                                            GANX + \
+                                                                            " wurde angelegt.");
+                        }else
+                        {
+                            ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
+                                                                            "\n"+ \
+                                                                            postfixe.zeile(i) + \
+                                                                            GANX + \
+                                                                            " wurde angelegt.");
+                        }
+                        if(quelldateien_erhalten=="nein")
+                        {
+                            datei_h.remove();
+                            datei_n.remove();
+                        }
                     }
                 }
             }
@@ -707,6 +730,9 @@ void MainWindow::on_pushButton_Start_clicked()
 
             //-------------------------------------------------------------------------------------------------
             dateiinhalt = bearbeitung_auf_die_Unterseite(dateiinhalt, prefix1);
+            //-------------------------------------------------------------------------------------------------
+            dateiinhalt = ascii_optimieren(dateiinhalt);
+            //-------------------------------------------------------------------------------------------------
 
             if(std_namen == "ja")
             {
@@ -754,24 +780,45 @@ void MainWindow::on_pushButton_Start_clicked()
                     return;
                 }else
                 {
-                    datei_neu.write(ascii_umwandeln_in_ganx(dateiinhalt).toUtf8().constData());
-                    datei_neu.close();
-                    if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || ((i==1)&&(erzeuge_ascii != "ja")))
+                    QString msg = ascii_umwandeln_in_ganx(dateiinhalt);
+                    if(msg.contains("Fehler!"))
                     {
-                        ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
-                                                                        GANX + \
-                                                                        " wurde angelegt.");
+                        if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || ((i==1)&&(erzeuge_ascii != "ja")))
+                        {
+                            ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
+                                                                            GANX + \
+                                                                            " ----> " + \
+                                                                            msg);
+                        }else
+                        {
+                            ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
+                                                                            "\n"+ \
+                                                                            postfixe.zeile(i) + \
+                                                                            GANX + \
+                                                                            " ----> " + \
+                                                                            msg);
+                        }
                     }else
                     {
-                        ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
-                                                                        "\n"+ \
-                                                                        postfixe.zeile(i) + \
-                                                                        GANX + \
-                                                                        " wurde angelegt.");
-                    }
-                    if(quelldateien_erhalten=="nein")
-                    {
-                        datei.remove();
+                        datei_neu.write(msg.toUtf8().constData());
+                        datei_neu.close();
+                        if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || ((i==1)&&(erzeuge_ascii != "ja")))
+                        {
+                            ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
+                                                                            GANX + \
+                                                                            " wurde angelegt.");
+                        }else
+                        {
+                            ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
+                                                                            "\n"+ \
+                                                                            postfixe.zeile(i) + \
+                                                                            GANX + \
+                                                                            " wurde angelegt.");
+                        }
+                        if(quelldateien_erhalten=="nein")
+                        {
+                            datei.remove();
+                        }
                     }
                 }
             }
@@ -800,6 +847,9 @@ void MainWindow::on_pushButton_Start_clicked()
 
             //-------------------------------------------------------------------------------------------------
             dateiinhalt = bearbeitung_auf_die_Unterseite(dateiinhalt, prefix2);
+            //-------------------------------------------------------------------------------------------------
+            dateiinhalt = ascii_optimieren(dateiinhalt);
+            //-------------------------------------------------------------------------------------------------
 
             if(std_namen == "ja")
             {
@@ -847,24 +897,45 @@ void MainWindow::on_pushButton_Start_clicked()
                     return;
                 }else
                 {
-                    datei_neu.write(ascii_umwandeln_in_ganx(dateiinhalt).toUtf8().constData());
-                    datei_neu.close();
-                    if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || ((i==1)&&(erzeuge_ascii != "ja")) )
+                    QString msg = ascii_umwandeln_in_ganx(dateiinhalt);
+                    if(msg.contains("Fehler!"))
                     {
-                        ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
-                                                                        GANX + \
-                                                                        " wurde angelegt.");
+                        if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || ((i==1)&&(erzeuge_ascii != "ja")) )
+                        {
+                            ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
+                                                                            GANX + \
+                                                                            " ----> " + \
+                                                                            msg);
+                        }else
+                        {
+                            ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
+                                                                            "\n"+ \
+                                                                            postfixe.zeile(i) + \
+                                                                            GANX + \
+                                                                            " ----> " + \
+                                                                            msg);
+                        }
                     }else
                     {
-                        ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
-                                                                        "\n"+ \
-                                                                        postfixe.zeile(i) + \
-                                                                        GANX + \
-                                                                        " wurde angelegt.");
-                    }
-                    if(quelldateien_erhalten=="nein")
-                    {
-                        datei.remove();
+                        datei_neu.write(msg.toUtf8().constData());
+                        datei_neu.close();
+                        if(ui->plainTextEdit_Meldungsfenster->toPlainText().isEmpty() || ((i==1)&&(erzeuge_ascii != "ja")) )
+                        {
+                            ui->plainTextEdit_Meldungsfenster->setPlainText(postfixe.zeile(i) + \
+                                                                            GANX + \
+                                                                            " wurde angelegt.");
+                        }else
+                        {
+                            ui->plainTextEdit_Meldungsfenster->setPlainText(ui->plainTextEdit_Meldungsfenster->toPlainText() +\
+                                                                            "\n"+ \
+                                                                            postfixe.zeile(i) + \
+                                                                            GANX + \
+                                                                            " wurde angelegt.");
+                        }
+                        if(quelldateien_erhalten=="nein")
+                        {
+                            datei.remove();
+                        }
                     }
                 }
             }
@@ -1130,7 +1201,6 @@ void MainWindow::on_actionWerkzeug_anzeigen_triggered()
 QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
 {
     double laenge_y, breite_x, dicke_z;
-    double refmass = 40;
     text_zeilenweise tz;
     tz.set_text(asciitext);
     text_zeilenweise zeile;
@@ -1722,6 +1792,14 @@ QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
             double l = zeile.zeile(7).toDouble();
             QString wkztyp = WKZ_TYP_SAEGE;
             QString wkz_nr = get_wkz_nummer(wkztyp);
+            if(wkz_nr.isEmpty())
+            {
+                QString msg = "Fehler!\nKeine Saege im Werkzeugmagazin für:\n" + zeile.get_text();
+                QMessageBox mb;
+                mb.setText(msg);
+                mb.exec();
+                return msg;
+            }
             double wkz_dm = get_wkz_dm(wkz_nr).toDouble();
             double nutvariante = zeile.zeile(9).toDouble();
             QString nutvariante_qstring = "";
@@ -1750,6 +1828,7 @@ QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
 
                 returntext += "  <PrgrFileWork>";
                 returntext += "\n";
+                //----------------------
                 returntext += "    <CntID>";
                 returntext += int_to_qstring(i);               //ID-Nummer, wir nehemen einfach die Zeilennummer in der ASCII-Datei
                 returntext += "</CntID>";
@@ -1847,10 +1926,260 @@ QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
         {
             if(zeile.zeile(3).toDouble() == 101)//Rechtecktaschen
             {
+                double x = zeile.zeile(4).toDouble();
+                double y = zeile.zeile(5).toDouble();
+                double z = zeile.zeile(6).toDouble();
+                double lx = zeile.zeile(7).toDouble();
+                double by = zeile.zeile(8).toDouble();
+                double minmass = lx;
+                if(by < minmass)
+                {
+                    minmass = by;
+                }
+                QString wkztyp = WKZ_TYP_FRAESER;
+                QString wkz_nr = get_wkz_nummer(wkztyp, minmass, z);
+                if(wkz_nr.isEmpty())
+                {
+                    QString msg = "Fehler!\nKein Fraeser im Werkzeugmagazin für:\n" + zeile.get_text();
+                    QMessageBox mb;
+                    mb.setText(msg);
+                    mb.exec();
+                    return msg;
+                }
+                double wkz_dm = get_wkz_dm(wkz_nr).toDouble();
+                double wkz_vorschub = get_wkz_vorschub(wkz_nr).toDouble();
+                int zustellungen = zeile.zeile(10).toInt();
+                if(zustellungen <= 0)
+                {
+                    zustellungen = 1;
+                }
+
+                returntext += "  <PrgrFileWork>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <CntID>";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemen einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</CntID>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Plane>";
+                if(zeile.zeile(2)==BEZUG_FLAECHE_OBEN_ASCII)
+                {
+                    returntext += "Top";
+                }else
+                {
+                    returntext += "Bottom";
+                }
+                returntext += "</Plane>";
+                returntext += "\n";
+                //----------------------Bezugskante festlegen:
+                QString bezug = BEZUG_REF_OBEN_LINKS;
+                //y < 40 -> TL
+                //Länge - y < 40 ->BL
+                if(laenge_y - y < bezugsmass)
+                {
+                    bezug = BEZUG_REF_UNTEN_LINKS;
+                }
+                returntext += "    <Ref>";
+                returntext += bezug;
+                returntext += "</Ref>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Typ>M</Typ>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <X>";
+                returntext += double_to_qstring(x);
+                returntext += "</X>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Y>";
+                returntext += double_to_qstring(y);
+                returntext += "</Y>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Z>";
+                returntext += double_to_qstring(0);
+                returntext += "</Z>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Tool>";
+                returntext += wkz_nr;
+                returntext += "</Tool>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Mill>";
+                returntext += "3";                      //Rechtecktasche
+                returntext += ";";
+                returntext += double_to_qstring(by);    //TAB
+                returntext += ";";
+                returntext += double_to_qstring(lx);    //TAL
+                returntext += ";";
+                returntext += double_to_qstring(wkz_dm/2); //Eckenradius Tasche
+                returntext += ";";
+                returntext += double_to_qstring(z);     //TaTi
+                returntext += ";";
+                returntext += "1";                      //Variante der Rechtecktasche (1 = ausgeräumt)
+                returntext += ";";
+                returntext += "GL";                     //Gleichlauf (GL = Gleichlauf / GG = Gegenlauf)
+                returntext += ";";
+                returntext += double_to_qstring(wkz_vorschub);
+                returntext += ";";
+                returntext += int_to_qstring(zustellungen);
+                returntext += "</Mill>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <ImageKey>RE</ImageKey>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <OldID>";
+                if(zeile.zeile(2)==BEZUG_FLAECHE_OBEN_ASCII)
+                {
+                    returntext += "Top";
+                }else
+                {
+                    returntext += "Bottom";
+                }
+                returntext += "\\";
+                returntext += BEZUG_REF_OBEN_LINKS;
+                returntext += "\\";
+                returntext += "M-";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemen einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</OldID>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <KleiGeTei>";
+                returntext += "0";
+                returntext += "</KleiGeTei>";
+                returntext += "\n";
+                //----------------------
+                returntext += "  </PrgrFileWork>";
+                returntext += "\n";
+
+
 
             }else if(zeile.zeile(3).toDouble() == 102)//Kreistaschen
             {
+                double x = zeile.zeile(4).toDouble();
+                double y = zeile.zeile(5).toDouble();
+                double z = zeile.zeile(6).toDouble();
+                double dm = zeile.zeile(7).toDouble();
+                QString wkztyp = WKZ_TYP_FRAESER;
+                QString wkz_nr = get_wkz_nummer(wkztyp, dm, z);
+                if(wkz_nr.isEmpty())
+                {
+                    QString msg = "Fehler!\nKein Fraeser im Werkzeugmagazin für:\n" + zeile.get_text();
+                    QMessageBox mb;
+                    mb.setText(msg);
+                    mb.exec();
+                    return msg;
+                }
+                //double wkz_dm = get_wkz_dm(wkz_nr).toDouble();
+                double wkz_vorschub = get_wkz_vorschub(wkz_nr).toDouble();
+                int zustellungen = zeile.zeile(8).toInt();
+                if(zustellungen <= 0)
+                {
+                    zustellungen = 1;
+                }
 
+
+                returntext += "  <PrgrFileWork>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <CntID>";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemen einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</CntID>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Plane>";
+                if(zeile.zeile(2)==BEZUG_FLAECHE_OBEN_ASCII)
+                {
+                    returntext += "Top";
+                }else
+                {
+                    returntext += "Bottom";
+                }
+                returntext += "</Plane>";
+                returntext += "\n";
+                //----------------------Bezugskante festlegen:
+                QString bezug = BEZUG_REF_OBEN_LINKS;
+                //y < 40 -> TL
+                //Länge - y < 40 ->BL
+                if(laenge_y - y < bezugsmass)
+                {
+                    bezug = BEZUG_REF_UNTEN_LINKS;
+                }
+                returntext += "    <Ref>";
+                returntext += bezug;
+                returntext += "</Ref>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Typ>M</Typ>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <X>";
+                returntext += double_to_qstring(x);
+                returntext += "</X>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Y>";
+                returntext += double_to_qstring(y);
+                returntext += "</Y>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Z>";
+                returntext += double_to_qstring(0);
+                returntext += "</Z>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Tool>";
+                returntext += wkz_nr;
+                returntext += "</Tool>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Mill>";
+                returntext += "2";                      //Kreistasche
+                returntext += ";";
+                returntext += double_to_qstring(dm);
+                returntext += ";";
+                returntext += double_to_qstring(z);     //TaTi
+                returntext += ";";
+                returntext += "2";                      //Variante der Kreistasche (2 = ausgeräumt)
+                returntext += ";";
+                returntext += "GL";                     //Gleichlauf (GL = Gleichlauf / GG = Gegenlauf)
+                returntext += ";";
+                returntext += double_to_qstring(wkz_vorschub);
+                returntext += ";";
+                returntext += int_to_qstring(zustellungen);
+                returntext += "</Mill>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <ImageKey>KR</ImageKey>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <OldID>";
+                if(zeile.zeile(2)==BEZUG_FLAECHE_OBEN_ASCII)
+                {
+                    returntext += "Top";
+                }else
+                {
+                    returntext += "Bottom";
+                }
+                returntext += "\\";
+                returntext += BEZUG_REF_OBEN_LINKS;
+                returntext += "\\";
+                returntext += "M-";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemen einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</OldID>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <KleiGeTei>";
+                returntext += "0";
+                returntext += "</KleiGeTei>";
+                returntext += "\n";
+                //----------------------
+                returntext += "  </PrgrFileWork>";
+                returntext += "\n";
             }
         }
     }
@@ -2476,7 +2805,7 @@ QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
             double l = zeile.zeile(7).toDouble();
             QString wkztyp = WKZ_TYP_SAEGE;
             QString wkz_nr = get_wkz_nummer(wkztyp);
-            double wkz_dm = get_wkz_dm(wkz_nr).toDouble();
+            //double wkz_dm = get_wkz_dm(wkz_nr).toDouble();
             double nutvariante = zeile.zeile(9).toDouble();
             QString nutvariante_qstring = "";
             if(nutvariante == 1)
@@ -2598,10 +2927,261 @@ QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
         {
             if(zeile.zeile(3).toDouble() == 101)//Rechtecktaschen
             {
+                double x = zeile.zeile(4).toDouble();
+                double y = zeile.zeile(5).toDouble();
+                double z = zeile.zeile(6).toDouble();
+                double lx = zeile.zeile(7).toDouble();
+                double by = zeile.zeile(8).toDouble();
+                double minmass = lx;
+                if(by < minmass)
+                {
+                    minmass = by;
+                }
+                QString wkztyp = WKZ_TYP_FRAESER;
+                QString wkz_nr = get_wkz_nummer(wkztyp, minmass, z);
+                double wkz_dm = get_wkz_dm(wkz_nr).toDouble();
+                double wkz_vorschub = get_wkz_vorschub(wkz_nr).toDouble();
+                int zustellungen = zeile.zeile(10).toInt();
+                if(zustellungen <= 0)
+                {
+                    zustellungen = 1;
+                }
 
+                returntext += "  <PrgrFile>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <CntID>";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemen einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</CntID>";
+                returntext += "\n";
+                //----------------------
+                QString bezug = BEZUG_REF_OBEN_LINKS;
+                //y < 40 -> TL
+                //Länge - y < 40 ->BL
+                if(laenge_y - y < bezugsmass)
+                {
+                    bezug = BEZUG_REF_UNTEN_LINKS;
+                    y = laenge_y - y;
+                }
+                //----------------------
+                returntext += "    <ID>";
+                if(zeile.zeile(2)==BEZUG_FLAECHE_OBEN_ASCII)
+                {
+                    returntext += "Top";
+                }else
+                {
+                    returntext += "Bottom";
+                }
+                returntext += "\\";
+                returntext += bezug;
+                returntext += "\\";
+                returntext += "M-";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</ID>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefVal1>";
+                returntext += double_to_qstring(y).replace(".",",");
+                returntext += "</RefVal1>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefVal2>";
+                returntext += double_to_qstring(x).replace(".",",");
+                returntext += "</RefVal2>";
+                returntext += "\n";
+                //----------------------
+                //----------------------
+                returntext += "    <Diameter>";
+                returntext += "0";
+                returntext += "</Diameter>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Depth>";
+                returntext += double_to_qstring(z).replace(".",",");
+                returntext += "</Depth>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DoDbl>false</DoDbl>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <UsedDbl>ERR</UsedDbl>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblB>false</DblB>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblL>false</DblL>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblE>false</DblE>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DoMF>false</DoMF>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Tool>";
+                returntext += wkz_nr;
+                returntext += "</Tool>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Cyclic>0</Cyclic>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Mill>";
+                returntext += "3";                      //Rechtecktasche
+                returntext += ";";
+                returntext += double_to_qstring(by);    //TAB
+                returntext += ";";
+                returntext += double_to_qstring(lx);    //TAL
+                returntext += ";";
+                returntext += double_to_qstring(wkz_dm/2); //Eckenradius Tasche
+                returntext += ";";
+                returntext += double_to_qstring(z);     //TaTi
+                returntext += ";";
+                returntext += "1";                      //Variante der Rechtecktasche (1 = ausgeräumt)
+                returntext += ";";
+                returntext += "GL";                     //Gleichlauf (GL = Gleichlauf / GG = Gegenlauf)
+                returntext += ";";
+                returntext += double_to_qstring(wkz_vorschub);
+                returntext += ";";
+                returntext += int_to_qstring(zustellungen);
+                returntext += "</Mill>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <ImageKey>RE</ImageKey>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Step>1</Step>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Clause>0</Clause>";
+                returntext += "\n";
+                //----------------------
+                returntext += "  </PrgrFile>";
+                returntext += "\n";
             }else if(zeile.zeile(3).toDouble() == 102)//Kreistaschen
             {
+                double x = zeile.zeile(4).toDouble();
+                double y = zeile.zeile(5).toDouble();
+                double z = zeile.zeile(6).toDouble();
+                double dm = zeile.zeile(7).toDouble();
+                QString wkztyp = WKZ_TYP_FRAESER;
+                QString wkz_nr = get_wkz_nummer(wkztyp, dm, z);
+                //double wkz_dm = get_wkz_dm(wkz_nr).toDouble();
+                double wkz_vorschub = get_wkz_vorschub(wkz_nr).toDouble();
+                int zustellungen = zeile.zeile(8).toInt();
+                if(zustellungen <= 0)
+                {
+                    zustellungen = 1;
+                }
 
+                returntext += "  <PrgrFile>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <CntID>";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemen einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</CntID>";
+                returntext += "\n";
+                //----------------------
+                QString bezug = BEZUG_REF_OBEN_LINKS;
+                //y < 40 -> TL
+                //Länge - y < 40 ->BL
+                if(laenge_y - y < bezugsmass)
+                {
+                    bezug = BEZUG_REF_UNTEN_LINKS;
+                    y = laenge_y - y;
+                }
+                //----------------------
+                returntext += "    <ID>";
+                if(zeile.zeile(2)==BEZUG_FLAECHE_OBEN_ASCII)
+                {
+                    returntext += "Top";
+                }else
+                {
+                    returntext += "Bottom";
+                }
+                returntext += "\\";
+                returntext += bezug;
+                returntext += "\\";
+                returntext += "M-";
+                returntext += int_to_qstring(i);               //ID-Nummer, wir nehemn einfach die Zeilennummer in der ASCII-Datei
+                returntext += "</ID>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefVal1>";
+                returntext += double_to_qstring(y).replace(".",",");
+                returntext += "</RefVal1>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <RefVal2>";
+                returntext += double_to_qstring(x).replace(".",",");
+                returntext += "</RefVal2>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Diameter>";
+                returntext += "0";
+                returntext += "</Diameter>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Depth>";
+                returntext += double_to_qstring(z).replace(".",",");
+                returntext += "</Depth>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DoDbl>false</DoDbl>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <UsedDbl>ERR</UsedDbl>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblB>false</DblB>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblL>false</DblL>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DblE>false</DblE>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <DoMF>false</DoMF>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Tool>";
+                returntext += wkz_nr;
+                returntext += "</Tool>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Cyclic>0</Cyclic>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Mill>";
+                returntext += "2";                      //Kreistasche
+                returntext += ";";
+                returntext += double_to_qstring(dm);
+                returntext += ";";
+                returntext += double_to_qstring(z);     //TaTi
+                returntext += ";";
+                returntext += "2";                      //Variante der Kreistasche (2 = ausgeräumt)
+                returntext += ";";
+                returntext += "GL";                     //Gleichlauf (GL = Gleichlauf / GG = Gegenlauf)
+                returntext += ";";
+                returntext += double_to_qstring(wkz_vorschub);
+                returntext += ";";
+                returntext += int_to_qstring(zustellungen);
+                returntext += "</Mill>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <ImageKey>KR</ImageKey>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Step>1</Step>";
+                returntext += "\n";
+                //----------------------
+                returntext += "    <Clause>0</Clause>";
+                returntext += "\n";
+                //----------------------
+                returntext += "  </PrgrFile>";
+                returntext += "\n";
             }
         }
     }
@@ -2612,11 +3192,12 @@ QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
     return returntext;
 }
 
-QString MainWindow::get_wkz_nummer(QString wkz_typ, double wkz_dm, double bearbeitungstiefe)
+QString MainWindow::get_wkz_nummer(QString wkz_typ, double dm, double bearbeitungstiefe)
 {
     QString returntext = "";
     text_zeilenweise zeile;
     zeile.set_trennzeichen('\t');
+    double wkz_dm_tmp = 0;
 
     for(uint i = 2; i<=werkzeug.zeilenanzahl() ;i++)
     {
@@ -2624,7 +3205,7 @@ QString MainWindow::get_wkz_nummer(QString wkz_typ, double wkz_dm, double bearbe
 
         if(  (zeile.zeile(1) == wkz_typ)  &&  (wkz_typ == WKZ_TYP_BOHRER)  )
         {
-            if(zeile.zeile(3).toDouble() == wkz_dm)
+            if(zeile.zeile(3).toDouble() == dm)
             {
                 if(zeile.zeile(4).toDouble() > bearbeitungstiefe)
                 {
@@ -2634,6 +3215,17 @@ QString MainWindow::get_wkz_nummer(QString wkz_typ, double wkz_dm, double bearbe
         }else if(  (zeile.zeile(1) == wkz_typ)  &&  (wkz_typ == WKZ_TYP_SAEGE)  )
         {
             returntext = zeile.zeile(2);
+        }else if(  (zeile.zeile(1) == wkz_typ)  &&  (wkz_typ == WKZ_TYP_FRAESER)  )
+        {
+            double wkz_dm = zeile.zeile(3).toDouble();
+            if(  (wkz_dm <= dm-4)  &&  (wkz_dm > wkz_dm_tmp)  )
+            {
+                if(zeile.zeile(4).toDouble() > bearbeitungstiefe)
+                {
+                    wkz_dm_tmp = wkz_dm;
+                    returntext = zeile.zeile(2);
+                }
+            }
         }
     }   
     return returntext;
@@ -2658,6 +3250,63 @@ QString MainWindow::get_wkz_dm(QString wkz_nr)
     return returntext;
 }
 
+QString MainWindow::get_wkz_vorschub(QString wkz_nr)
+{
+    QString returntext = "";
+    text_zeilenweise zeile;
+    zeile.set_trennzeichen('\t');
 
+    for(uint i = 2; i<=werkzeug.zeilenanzahl() ;i++)
+    {
+        zeile.set_text(werkzeug.zeile(i));
 
+        if(zeile.zeile(2) == wkz_nr)
+        {
+            returntext = zeile.zeile(5);
+        }
 
+    }
+    return returntext;
+}
+
+text_zeilenweise MainWindow::ascii_optimieren(text_zeilenweise dateiinhalt)
+{
+    for(uint i=1; i<=dateiinhalt.zeilenanzahl() ;i++)
+    {
+        text_zeilenweise zeile;
+        zeile.set_trennzeichen(';');
+        zeile.set_text(dateiinhalt.zeile(i));
+
+        if(zeile.zeile(1)==BEARBEITUNG_FRAES)//Alle arten von Fräsarbeiten
+        {
+            if(zeile.zeile(3).toDouble() == 101)//Rechtecktaschen
+            {
+                if(zeile.zeilenanzahl() >= 12)//12er Eintrag ist der Drehwinkel ->nicht ganner-ascii-konform, daher prüfen ob vorhanden
+                {
+                    double drewi = zeile.zeile(12).toDouble();
+                    if(  (drewi == 90)  ||
+                         (drewi == -90) ||
+                         (drewi == 270) ||
+                         (drewi == -270)  )
+                    {
+                        QString l = zeile.zeile(7);
+                        QString b = zeile.zeile(8);
+                        zeile.zeile_ersaetzen(7, b);
+                        zeile.zeile_ersaetzen(8, l);
+                    }
+                }
+            }
+        }
+        dateiinhalt.zeile_ersaetzen(i, zeile.get_text());
+
+    }
+    return dateiinhalt;
+}
+
+QString MainWindow::ascii_optimieren(QString dateiinhalt)
+{
+    text_zeilenweise tz;
+    tz.set_text(dateiinhalt);
+    tz = ascii_optimieren(tz);
+    return tz.get_text();
+}
