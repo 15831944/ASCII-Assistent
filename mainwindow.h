@@ -55,6 +55,8 @@ private:
     QString bearbeitung_auf_die_Unterseite(QString dateitext, QString prefix);
     QString namen_durch_std_namen_tauschen(QString name);
     QString ascii_umwandeln_in_ganx(QString asciitext);
+    text_zeilenweise ascii_optimieren(text_zeilenweise dateiinhalt);
+    QString ascii_optimieren(QString dateiinhalt);
 
     //Pfade:
     QString verzeichnis_quelle, verzeichnis_ziel, verzeichnis_ziel_ganx;
@@ -73,8 +75,9 @@ private:
     void setup();
     void schreibe_ini();
     void dateien_erfassen();
-    QString get_wkz_nummer(QString wkz_typ, double wkz_dm = 0, double bearbeitungstiefe = 0);
+    QString get_wkz_nummer(QString wkz_typ, double dm = 0, double bearbeitungstiefe = 0);
     QString get_wkz_dm(QString wkz_nr);
+    QString get_wkz_vorschub(QString wkz_nr);
 
 };
 
