@@ -65,6 +65,7 @@ private:
     QString bauteile_drehen(QString dateiinhalt);
     text_zeilenweise bauteile_drehen_90Grad(text_zeilenweise dateiinhalt);
     void warnungen_ganx_in_mb_ausgeben(QString dateiinhalt_ascii);
+    QString ima_makros_umwandeln(QString dateiinhalt);
 
     //Pfade:
     QString verzeichnis_quelle, verzeichnis_ziel, verzeichnis_ziel_ganx;
