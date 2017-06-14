@@ -602,6 +602,8 @@ void MainWindow::on_pushButton_Start_clicked()
             }
             dateiinhalt_haupt = bearbeitung_auf_die_Unterseite(dateiinhalt_haupt, prefix1);
 
+            //--------------------------------------------------------------------- ----------------------
+            dateiinhalt_haupt = ima_makros_umwandeln(dateiinhalt_haupt);
             //--------------------------------------------------------------------- ----------------------Bearbeitungen der Neben-Seite:
 
             //Ich gehe davon aus, der VW alle HBE immer auf die Hauptseite exportiert, daher keine Berücksichtigung für HBEs
@@ -626,6 +628,8 @@ void MainWindow::on_pushButton_Start_clicked()
                 datei_n.close();
             }
 
+            //--------------------------------------------------------------------- ----------------------
+            dateiinhalt_neben = ima_makros_umwandeln(dateiinhalt_neben);
             //--------------------------------------------------------------------- ----------------------Inhalte zusammenführen:
 
             text_zeilenweise neue_Datei_tz;
@@ -759,6 +763,8 @@ void MainWindow::on_pushButton_Start_clicked()
             }
 
             //-------------------------------------------------------------------------------------------------
+            dateiinhalt = ima_makros_umwandeln(dateiinhalt);
+            //-------------------------------------------------------------------------------------------------
             dateiinhalt = bearbeitung_auf_die_Unterseite(dateiinhalt, prefix1);
             //-------------------------------------------------------------------------------------------------
             dateiinhalt = ascii_optimieren(dateiinhalt);
@@ -878,6 +884,8 @@ void MainWindow::on_pushButton_Start_clicked()
                 datei.close();
             }
 
+            //-------------------------------------------------------------------------------------------------
+            dateiinhalt = ima_makros_umwandeln(dateiinhalt);
             //-------------------------------------------------------------------------------------------------
             dateiinhalt = bearbeitung_auf_die_Unterseite(dateiinhalt, prefix2);
             //-------------------------------------------------------------------------------------------------
@@ -3196,7 +3204,6 @@ QString MainWindow::get_wkz_nummer(QString wkz_typ, double dm, double bearbeitun
     for(uint i = 2; i<=werkzeug.zeilenanzahl() ;i++)
     {
         zeile.set_text(werkzeug.zeile(i));
-
         if(  (zeile.zeile(1) == wkz_typ)  &&  (wkz_typ == WKZ_TYP_BOHRER)  )
         {
             if(zeile.zeile(3).toDouble() == dm)
@@ -3222,6 +3229,26 @@ QString MainWindow::get_wkz_nummer(QString wkz_typ, double dm, double bearbeitun
             }
         }
     }   
+    if(returntext.isEmpty())
+    {
+        wkz_dm_tmp = 0;
+        for(uint i = 2; i<=werkzeug.zeilenanzahl() ;i++)
+        {
+            zeile.set_text(werkzeug.zeile(i));
+            if(  (zeile.zeile(1) == wkz_typ)  &&  (wkz_typ == WKZ_TYP_FRAESER)  )
+            {
+                double wkz_dm = zeile.zeile(3).toDouble();
+                if(  (wkz_dm <= dm-1)  &&  (wkz_dm > wkz_dm_tmp)  )
+                {
+                    if(zeile.zeile(4).toDouble() > bearbeitungstiefe)
+                    {
+                        wkz_dm_tmp = wkz_dm;
+                        returntext = zeile.zeile(2);
+                    }
+                }
+            }
+        }
+    }
     return returntext;
 }
 
@@ -3622,4 +3649,78 @@ void MainWindow::warnungen_ganx_in_mb_ausgeben(QString dateiinhalt_ascii)
 
         }
     }
+}
+
+QString MainWindow::ima_makros_umwandeln(QString dateiinhalt)
+{
+    text_zeilenweise inhalt_tz;
+    inhalt_tz.set_text(dateiinhalt);
+
+    for(uint i=1; i<=inhalt_tz.zeilenanzahl() ;i++)
+    {
+        QString zeile_qstring = inhalt_tz.zeile(i);
+
+        if(  (zeile_qstring.at(0) == ';')  &&
+             (zeile_qstring.at(1) == ' ')  )
+        {
+            text_zeilenweise zeile;
+            zeile.set_trennzeichen(';');
+            zeile.set_text(inhalt_tz.zeile(2)); //Programmkopf
+
+            double bx = zeile.zeile(2).toDouble(); //Werkstückbreite = X-Maß
+            double ly = zeile.zeile(3).toDouble(); //Werkstücklänge  = Y-Maß
+            double dz = zeile.zeile(4).toDouble(); //Werkstückdicke  = Z-Maß
+
+            QString bx_qstring = zeile.zeile(2); //Werkstückbreite = X-Maß
+            QString ly_qstring = zeile.zeile(3); //Werkstücklänge  = Y-Maß
+            QString dz_qstring = zeile.zeile(4); //Werkstückdicke  = Z-Maß
+
+            QMessageBox mb;
+            mb.setText("Programmierung noch nicht fertig!\nASCII enthaellt IMA-Makros");
+            mb.exec();
+
+            zeile.set_text(zeile_qstring);
+
+            if(zeile_qstring.contains("Kreistasche"))
+            {
+                QString afb_qstring = zeile.zeile(14);
+                if(afb_qstring.contains("D"))
+                {
+                    //afb_qstring.replace("D", double_to_qstring(dz));
+                    //afb_qstring.replace("D", dz_qstring);
+                }
+                if(afb_qstring.contains("B"))
+                {
+                    //afb_qstring.replace("B", double_to_qstring(bx));
+                }
+                if(afb_qstring.contains("L"))
+                {
+                    //afb_qstring.replace("L", double_to_qstring(ly));
+                }
+
+
+
+                double afb = ausdruck_auswerten(afb_qstring).toDouble();
+
+                if(afb > 0)
+                {
+
+
+                    QString zeile_neu = "";
+                    zeile_neu += "M; TOP; 102;";
+                    //x:
+                    double x = ausdruck_auswerten(zeile.zeile(3)).toDouble();
+                    //y:
+                    //z:
+                    //dm:
+                    //zustellung(optonal):
+                }
+            }else if(zeile_qstring.contains("Rechtecktasche"))
+            {
+
+            }
+        }
+    }
+
+    return inhalt_tz.get_text();
 }
