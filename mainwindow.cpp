@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#define VERSION "2017.06.13"
+#define VERSION "Version 2.2017.06.14"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     verzeichnis_quelle  = "";
     verzeichnis_ziel    = "";
+    drehung_des_bauteils = "0";
     tz = QDir::separator(); //Systemspezifischer Separator (Linux: Ordner/Unterordner/...)
     setup();
     on_actionInfo_triggered();
@@ -74,6 +75,10 @@ void MainWindow::setup()
 
             ui->checkBox_std_namen->setChecked(false);
             file.write("std_namen:nein");
+            file.write("\n");
+
+            ui->radioButton_drehung_0->setChecked(true);
+            file.write("drehung_des_bauteils:0");
             file.write("\n");
 
         }
@@ -148,6 +153,22 @@ void MainWindow::setup()
                     }else
                     {
                         ui->checkBox_ganx->setChecked(false);
+                    }
+                }else if(zeile.contains("drehung_des_bauteils:"))
+                {
+                    drehung_des_bauteils = text_mitte(zeile, "drehung_des_bauteils:", "\n");
+                    if(drehung_des_bauteils == "0")
+                    {
+                        ui->radioButton_drehung_0->setChecked(true);
+                    }else if(drehung_des_bauteils == "90")
+                    {
+                        ui->radioButton_drehung_90->setChecked(true);
+                    }else if(drehung_des_bauteils == "180")
+                    {
+                        ui->radioButton_drehung_180->setChecked(true);
+                    }else if(drehung_des_bauteils == "270")
+                    {
+                        ui->radioButton_drehung_270->setChecked(true);
                     }
                 }
             }
@@ -242,6 +263,12 @@ void MainWindow::schreibe_ini()
         file.write("erzeuge_ganx:");
         file.write(erzeuge_ganx.toUtf8());
         file.write("\n");
+
+        //-------------------------------------------Radio-Buttons:
+        file.write("drehung_des_bauteils:");
+        file.write(drehung_des_bauteils.toUtf8());
+        file.write("\n");
+
     }
     file.close();
 }
@@ -251,7 +278,7 @@ void MainWindow::on_actionInfo_triggered()
     QString tmp;
     tmp = "ASCII-Assistent / ";
     tmp += VERSION;
-    tmp +=" / Lizenz:  GPL / Autor: Oliver Schuft\n";
+    tmp +=" / Lizenz:  GPL\n";
     tmp += "\nBislang noch nicht unsterstuetzt wird:\n";
     tmp += "- Linie";
     tmp += "\n";
@@ -614,6 +641,8 @@ void MainWindow::on_pushButton_Start_clicked()
             //-------------------------------------------------------------------------------------------------
             neue_Datei_tz = ascii_optimieren(neue_Datei_tz);
             //-------------------------------------------------------------------------------------------------
+            neue_Datei_tz = bauteile_drehen(neue_Datei_tz);
+            //-------------------------------------------------------------------------------------------------
 
             if(std_namen == "ja")
             {
@@ -662,6 +691,7 @@ void MainWindow::on_pushButton_Start_clicked()
                     return;
                 }else
                 {
+                    warnungen_ganx_in_mb_ausgeben(neue_Datei_tz.get_text());
                     QString msg = ascii_umwandeln_in_ganx(neue_Datei_tz.get_text());
                     if(msg.contains("Fehler!"))
                     {
@@ -733,6 +763,8 @@ void MainWindow::on_pushButton_Start_clicked()
             //-------------------------------------------------------------------------------------------------
             dateiinhalt = ascii_optimieren(dateiinhalt);
             //-------------------------------------------------------------------------------------------------
+            dateiinhalt = bauteile_drehen(dateiinhalt);
+            //-------------------------------------------------------------------------------------------------
 
             if(std_namen == "ja")
             {
@@ -780,6 +812,7 @@ void MainWindow::on_pushButton_Start_clicked()
                     return;
                 }else
                 {
+                    warnungen_ganx_in_mb_ausgeben(dateiinhalt);
                     QString msg = ascii_umwandeln_in_ganx(dateiinhalt);
                     if(msg.contains("Fehler!"))
                     {
@@ -850,6 +883,8 @@ void MainWindow::on_pushButton_Start_clicked()
             //-------------------------------------------------------------------------------------------------
             dateiinhalt = ascii_optimieren(dateiinhalt);
             //-------------------------------------------------------------------------------------------------
+            dateiinhalt = bauteile_drehen(dateiinhalt);
+            //-------------------------------------------------------------------------------------------------
 
             if(std_namen == "ja")
             {
@@ -897,6 +932,7 @@ void MainWindow::on_pushButton_Start_clicked()
                     return;
                 }else
                 {
+                    warnungen_ganx_in_mb_ausgeben(dateiinhalt);
                     QString msg = ascii_umwandeln_in_ganx(dateiinhalt);
                     if(msg.contains("Fehler!"))
                     {
@@ -954,64 +990,15 @@ QString MainWindow::bearbeitung_auf_die_Unterseite(QString dateitext, QString pr
     //Werkstückbreite prüfen (X-Maß):
     QString tmp = programmkopf.zeile(2);
     double breite = tmp.toDouble();
-    if(breite < 50)
-    {
-        QString msg = "Fehler bei Bauteil ";
-        text_zeilenweise tz;
-        tz.set_trennzeichen(';');
-        tz.set_text(dateitext_tz.zeile(3));
-        msg+= tz.zeile(2);
-        msg+= "!\n";
-        msg+= "Breite < 50mm";
-        QMessageBox mb;
-        mb.setText(msg);
-        mb.exec();
-    }else if(breite > 1000)
-    {
-        QString msg = "Fehler bei Bauteil ";
-        text_zeilenweise tz;
-        tz.set_trennzeichen(';');
-        tz.set_text(dateitext_tz.zeile(3));
-        msg+= tz.zeile(2);
-        msg+= "!\n";
-        msg+= "Breite > 1000";
-        QMessageBox mb;
-        mb.setText(msg);
-        mb.exec();
-    }
 
     //Werkstücklänge merken für später (Y-Maß):
     tmp = programmkopf.zeile(3);
     double laenge = tmp.toDouble();
-    if(laenge < 250)
-    {
-        QString msg = "Fehler bei Bauteil ";
-        text_zeilenweise tz;
-        tz.set_trennzeichen(';');
-        tz.set_text(dateitext_tz.zeile(3));
-        msg+= tz.zeile(2);
-        msg+= "!\n";
-        msg+= "Laenge < 250mm";
-        QMessageBox mb;
-        mb.setText(msg);
-        mb.exec();
-    }
+
     //Werkstückdicke merken für später (Z-Maß):
     tmp = programmkopf.zeile(4);
     double dicke = tmp.toDouble();
-    if(dicke < 6)
-    {
-        QString msg = "Fehler bei Bauteil ";
-        text_zeilenweise tz;
-        tz.set_trennzeichen(';');
-        tz.set_text(dateitext_tz.zeile(3));
-        msg+= tz.zeile(2);
-        msg+= "!\n";
-        msg+= "Dicke < 6mm";
-        QMessageBox mb;
-        mb.setText(msg);
-        mb.exec();
-    }
+
     //Zeile 3 bearbeiten -->Bauteilnamen ändern:
     tmp = dateitext_tz.zeile(3);
     tmp = text_links(tmp, (text_links(prefix, ASCII)));
@@ -1069,7 +1056,14 @@ QString MainWindow::bearbeitung_auf_die_Unterseite(QString dateitext, QString pr
         {
             //Bezugskante:
             zeile.zeile_ersaetzen(2, BEZUG_FLAECHE_UNTEN_ASCII);
-            //Angenommen wird, das nur Nuten in Y-Richtung ausgegeben werden (nur das kann die CNC)
+
+            if(zeile.zeile(8).toDouble() == 1) //Nut parallel zur X-Achse
+            {
+                double pos_y = zeile.zeile(5).toDouble();
+                pos_y = breite - pos_y;
+                zeile.zeile_ersaetzen(5, double_to_qstring(pos_y));
+            }
+
             //Angenommen wird, dass nur durchgehende Nuten ausgegeben werden (Nur das kann VW derzeit)
         }else if(zeile.zeile(1)==BEARBEITUNG_FRAES)//Alle arten von Fräsarbeiten
         {
@@ -3309,4 +3303,323 @@ QString MainWindow::ascii_optimieren(QString dateiinhalt)
     tz.set_text(dateiinhalt);
     tz = ascii_optimieren(tz);
     return tz.get_text();
+}
+
+void MainWindow::on_radioButton_drehung_0_toggled(bool checked)
+{
+    if(checked)
+    {
+        drehung_des_bauteils = "0";
+    }
+    schreibe_ini();
+}
+
+void MainWindow::on_radioButton_drehung_90_toggled(bool checked)
+{
+    if(checked)
+    {
+        drehung_des_bauteils = "90";
+    }
+    schreibe_ini();
+}
+
+void MainWindow::on_radioButton_drehung_180_toggled(bool checked)
+{
+    if(checked)
+    {
+        drehung_des_bauteils = "180";
+    }
+    schreibe_ini();
+}
+
+void MainWindow::on_radioButton_drehung_270_toggled(bool checked)
+{
+    if(checked)
+    {
+        drehung_des_bauteils = "270";
+    }
+    schreibe_ini();
+}
+
+text_zeilenweise MainWindow::bauteile_drehen(text_zeilenweise dateiinhalt)
+{
+    if(drehung_des_bauteils == "90")
+    {
+        dateiinhalt = bauteile_drehen_90Grad(dateiinhalt);
+    }else if(drehung_des_bauteils == "180")
+    {
+        dateiinhalt = bauteile_drehen_90Grad(dateiinhalt);
+        dateiinhalt = bauteile_drehen_90Grad(dateiinhalt);
+    }else if(drehung_des_bauteils == "270")
+    {
+        dateiinhalt = bauteile_drehen_90Grad(dateiinhalt);
+        dateiinhalt = bauteile_drehen_90Grad(dateiinhalt);
+        dateiinhalt = bauteile_drehen_90Grad(dateiinhalt);
+    }
+    return dateiinhalt;
+}
+
+QString MainWindow::bauteile_drehen(QString dateiinhalt)
+{
+    text_zeilenweise tz;
+    tz.set_text(dateiinhalt);
+    tz = bauteile_drehen(tz);
+    return tz.get_text();
+}
+
+text_zeilenweise MainWindow::bauteile_drehen_90Grad(text_zeilenweise dateiinhalt)
+{
+    text_zeilenweise zeile;
+    zeile.set_trennzeichen(';');
+    zeile.set_text(dateiinhalt.zeile(2)); //Programmkopf
+
+    double bx = zeile.zeile(2).toDouble(); //Werkstückbreite = X-Maß
+    double ly = zeile.zeile(3).toDouble(); //Werkstücklänge  = Y-Maß
+
+    //Werkstück drehen
+    double tmpzahl = bx;
+    bx = ly;
+    ly = tmpzahl;
+
+    //Maße zurückschreiben:
+    zeile.zeile_ersaetzen(2, double_to_qstring(bx));
+    zeile.zeile_ersaetzen(3, double_to_qstring(ly));
+    dateiinhalt.zeile_ersaetzen(2, zeile.get_text()); //Programmkopf
+
+    for(uint i=4; i<=dateiinhalt.zeilenanzahl() ;i++)//Zeile 1+2 können übersprungen werden, Zeile 3 ist bereits geämdert
+    {
+        zeile.set_text(dateiinhalt.zeile(i));
+        if(zeile.zeile(1)==BEARBEITUNG_BOHRUNG)
+        {
+            double x = zeile.zeile(4).toDouble();
+            double y = zeile.zeile(5).toDouble();
+
+            if(zeile.zeile(2)==BEZUG_FLAECHE_OBEN_ASCII  ||  zeile.zeile(2)==BEZUG_FLAECHE_UNTEN_ASCII)
+            {
+                double neu_x; //X-Pos
+                double neu_y; //Y-Pos
+                              //Z bleibt Borhtiefe
+                neu_x = bx - y;
+                neu_y = x;
+                //Maße zurückschreiben:
+                zeile.zeile_ersaetzen(4, double_to_qstring(neu_x));
+                zeile.zeile_ersaetzen(5, double_to_qstring(neu_y));
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_HINTEN_ASCII)//Hinten
+            {
+                double neu_x;
+                double neu_y;
+                neu_x = y;
+                neu_y = x;
+                //Maße zurückschreiben:
+                zeile.zeile_ersaetzen(4, double_to_qstring(neu_x));
+                zeile.zeile_ersaetzen(5, double_to_qstring(neu_y));
+                zeile.zeile_ersaetzen(2, BEZUG_FLAECHE_RECHTS_ASCII);
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_VORNE_ASCII)//Vorne
+            {
+                double neu_x;
+                double neu_y;
+                neu_x = y;
+                neu_y = x;
+                //Maße zurückschreiben:
+                zeile.zeile_ersaetzen(4, double_to_qstring(neu_x));
+                zeile.zeile_ersaetzen(5, double_to_qstring(neu_y));
+                zeile.zeile_ersaetzen(2, BEZUG_FLAECHE_LINKS_ASCII);
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_LINKS_ASCII)//Links
+            {
+                double neu_x;
+                double neu_y;
+                neu_x = bx -y;
+                neu_y = x;
+                //Maße zurückschreiben:
+                zeile.zeile_ersaetzen(4, double_to_qstring(neu_x));
+                zeile.zeile_ersaetzen(5, double_to_qstring(neu_y));
+                zeile.zeile_ersaetzen(2, BEZUG_FLAECHE_HINTEN_ASCII);
+            }else if(zeile.zeile(2)==BEZUG_FLAECHE_RECHTS_ASCII)//Rechts
+            {
+                double neu_x;
+                double neu_y;
+                neu_x = bx -y;
+                neu_y = x;
+                //Maße zurückschreiben:
+                zeile.zeile_ersaetzen(4, double_to_qstring(neu_x));
+                zeile.zeile_ersaetzen(5, double_to_qstring(neu_y));
+                zeile.zeile_ersaetzen(2, BEZUG_FLAECHE_VORNE_ASCII);
+            }
+        }else if(zeile.zeile(1)==BEARBEITUNG_NUT)
+        {
+            double x = zeile.zeile(4).toDouble();
+            double y = zeile.zeile(5).toDouble();
+            double neu_x;
+            double neu_y;
+            neu_x = y;
+            neu_y = x;
+            //Maße zurückschreiben:
+            zeile.zeile_ersaetzen(4, double_to_qstring(neu_x));
+            zeile.zeile_ersaetzen(5, double_to_qstring(neu_y));
+            if(zeile.zeile(8).contains("1"))
+            {
+                zeile.zeile_ersaetzen(8, " 2");
+            }else
+            {
+                zeile.zeile_ersaetzen(8, " 1");
+            }
+        }else if(zeile.zeile(1)==BEARBEITUNG_FRAES)//Alle arten von Fräsarbeiten
+        {
+            if(zeile.zeile(3)==" 101")//Rechtecktaschen
+            {
+                double x = zeile.zeile(4).toDouble();
+                double y = zeile.zeile(5).toDouble();
+                double talx = zeile.zeile(7).toDouble();
+                double taly = zeile.zeile(8).toDouble();
+                double neu_x;
+                double neu_y;
+                double neu_talx;
+                double neu_taly;
+                neu_x = bx - y;
+                neu_y = x;
+                neu_talx = taly;
+                neu_taly = talx;
+                //Maße zurückschreiben:
+                zeile.zeile_ersaetzen(4, double_to_qstring(neu_x));
+                zeile.zeile_ersaetzen(5, double_to_qstring(neu_y));
+                zeile.zeile_ersaetzen(7, double_to_qstring(neu_talx));
+                zeile.zeile_ersaetzen(8, double_to_qstring(neu_taly));
+            }else if(zeile.zeile(3)==" 102")//Kreistaschen
+            {
+                double x = zeile.zeile(4).toDouble();
+                double y = zeile.zeile(5).toDouble();
+                double neu_x;
+                double neu_y;
+                neu_x = bx - y;
+                neu_y = x;
+                //Maße zurückschreiben:
+                zeile.zeile_ersaetzen(4, double_to_qstring(neu_x));
+                zeile.zeile_ersaetzen(5, double_to_qstring(neu_y));
+            }
+        }
+        //Maße zurückschreiben:
+        dateiinhalt.zeile_ersaetzen(i, zeile.get_text());
+    }
+    return dateiinhalt;
+}
+
+void MainWindow::warnungen_ganx_in_mb_ausgeben(QString dateiinhalt_ascii)
+{
+    //---------------------
+    bool fehler_nuten = false;      //Nuten parallel zur X-Achse kann die Maschine nicht!
+    bool fehler_HBE = false;        //HBE zu dicht am Rand!
+    //---------------------
+    text_zeilenweise datei_tz;
+    datei_tz.set_text(dateiinhalt_ascii);
+    text_zeilenweise zeile;
+    zeile.set_trennzeichen(';');
+
+    //-------------------------Werkstückmaße prüfen
+    zeile.set_text(datei_tz.zeile(2));
+    double wst_x = zeile.zeile(2).toDouble();
+    double wst_y = zeile.zeile(3).toDouble();
+    double wst_z = zeile.zeile(4).toDouble();
+
+    zeile.set_text(datei_tz.zeile(3));
+    QString wst_name = zeile.zeile(2);
+
+    if(wst_x < 50)
+    {
+        QString msg = "Achtung bei Bauteil ";
+        msg+= wst_name;
+        msg+= "!\n";
+        msg+= "Breite < 50mm";
+        msg+= "\n";
+        msg+= "Breite ist ";
+        msg+= double_to_qstring(wst_x);
+        QMessageBox mb;
+        mb.setText(msg);
+        mb.exec();
+    }else if(wst_x > 1000)
+    {
+        QString msg = "Achtung bei Bauteil ";
+        msg+= wst_name;
+        msg+= "!\n";
+        msg+= "Breite > 1000";
+        msg+= "\n";
+        msg+= "Breite ist ";
+        msg+= double_to_qstring(wst_x);
+        QMessageBox mb;
+        mb.setText(msg);
+        mb.exec();
+    }
+    if(wst_y < 250)
+    {
+        QString msg = "Achtung bei Bauteil ";
+        msg+= wst_name;
+        msg+= "!\n";
+        msg+= "Laenge < 250mm";
+        msg+= "\n";
+        msg+= "Laenge ist ";
+        msg+= double_to_qstring(wst_y);
+        QMessageBox mb;
+        mb.setText(msg);
+        mb.exec();
+    }
+    if(wst_z < 6)
+    {
+        QString msg = "Achtung bei Bauteil ";
+        msg+= wst_name;
+        msg+= "!\n";
+        msg+= "Dicke < 6mm";
+        msg+= "\n";
+        msg+= "Dicke ist ";
+        msg+= double_to_qstring(wst_z);
+        QMessageBox mb;
+        mb.setText(msg);
+        mb.exec();
+    }
+    //-------------------------Bearbeitungen prüfen
+    for(uint i=4 ; i<=datei_tz.zeilenanzahl() ; i++)
+    {
+        zeile.set_text(datei_tz.zeile(i));
+        if(zeile.zeile(1)==BEARBEITUNG_BOHRUNG)
+        {
+            if(  (zeile.zeile(2)==BEZUG_FLAECHE_VORNE_ASCII)  ||
+                 (zeile.zeile(2)==BEZUG_FLAECHE_HINTEN_ASCII))
+            {
+                if(fehler_HBE == false)
+                {
+                    double x = zeile.zeile(4).toDouble();
+                    if( x<18 )
+                    {
+                        QString msg = "Achtung bei Bauteil ";
+                        msg+= wst_name;
+                        msg+= "!\n";
+                        msg+= "HBE zu dicht am Rand!";
+                        msg+= "!\n";
+                        msg+= "X-Mass muss >= 18mm sein";
+                        msg+= "\n";
+                        msg+= "X-Mass ist ";
+                        msg+= double_to_qstring(x);
+                        QMessageBox mb;
+                        mb.setText(msg);
+                        mb.exec();
+                        fehler_HBE = true;
+                    }
+                }
+            }
+        }else if(zeile.zeile(1)==BEARBEITUNG_NUT)
+        {
+            if(  (zeile.zeile(8).toDouble() == 1)  &&  (fehler_nuten == false)  ) //Nut parallel zur X-Achse
+            {
+                QString msg = "Achtung bei Bauteil ";
+                msg+= wst_name;
+                msg+= "!\n";
+                msg+= "Nuten parallel zur X-Achse kann die Maschine nicht!";
+                QMessageBox mb;
+                mb.setText(msg);
+                mb.exec();
+                fehler_nuten = true;
+            }
+        }else if(zeile.zeile(1)==BEARBEITUNG_FRAES)
+        {
+
+        }
+    }
 }

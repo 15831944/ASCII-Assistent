@@ -42,6 +42,10 @@ private slots:
     void on_pushButton_ziel_ganx_clicked();
     void on_checkBox_ascii_stateChanged();
     void on_checkBox_ganx_stateChanged();
+    void on_radioButton_drehung_0_toggled(bool checked);
+    void on_radioButton_drehung_90_toggled(bool checked);
+    void on_radioButton_drehung_180_toggled(bool checked);
+    void on_radioButton_drehung_270_toggled(bool checked);
 
 private:
     Ui::MainWindow *ui;
@@ -57,6 +61,10 @@ private:
     QString ascii_umwandeln_in_ganx(QString asciitext);
     text_zeilenweise ascii_optimieren(text_zeilenweise dateiinhalt);
     QString ascii_optimieren(QString dateiinhalt);
+    text_zeilenweise bauteile_drehen(text_zeilenweise dateiinhalt);
+    QString bauteile_drehen(QString dateiinhalt);
+    text_zeilenweise bauteile_drehen_90Grad(text_zeilenweise dateiinhalt);
+    void warnungen_ganx_in_mb_ausgeben(QString dateiinhalt_ascii);
 
     //Pfade:
     QString verzeichnis_quelle, verzeichnis_ziel, verzeichnis_ziel_ganx;
@@ -67,6 +75,10 @@ private:
     QString quelldateien_erhalten;
     QString std_namen;
     QString erzeuge_ascii, erzeuge_ganx;
+
+    //Radio Buttons:
+    QString drehung_des_bauteils;
+
 
     //Variablen:
     double bezugsmass;
