@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#define VERSION "Version 2.2017.06.14"
+#define VERSION "Version 2.2017.07.10"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -1949,6 +1949,11 @@ QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
                     return msg;
                 }
                 double wkz_dm = get_wkz_dm(wkz_nr).toDouble();
+                double eckenradius = zeile.zeile(9).toDouble();
+                if(eckenradius < wkz_dm/2)
+                {
+                    eckenradius = wkz_dm/2;
+                }
                 double wkz_vorschub = get_wkz_vorschub(wkz_nr).toDouble();
                 int zustellungen = zeile.zeile(10).toInt();
                 if(zustellungen <= 0)
@@ -2017,7 +2022,7 @@ QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
                 returntext += ";";
                 returntext += double_to_qstring(lx);    //TAL
                 returntext += ";";
-                returntext += double_to_qstring(wkz_dm/2); //Eckenradius Tasche
+                returntext += double_to_qstring(eckenradius); //Eckenradius Tasche
                 returntext += ";";
                 returntext += double_to_qstring(z);     //TaTi
                 returntext += ";";
@@ -2942,6 +2947,11 @@ QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
                 QString wkztyp = WKZ_TYP_FRAESER;
                 QString wkz_nr = get_wkz_nummer(wkztyp, minmass, z);
                 double wkz_dm = get_wkz_dm(wkz_nr).toDouble();
+                double eckenradius = zeile.zeile(9).toDouble();
+                if(eckenradius < wkz_dm/2)
+                {
+                    eckenradius = wkz_dm/2;
+                }
                 double wkz_vorschub = get_wkz_vorschub(wkz_nr).toDouble();
                 int zustellungen = zeile.zeile(10).toInt();
                 if(zustellungen <= 0)
@@ -3036,7 +3046,7 @@ QString MainWindow::ascii_umwandeln_in_ganx(QString asciitext)
                 returntext += ";";
                 returntext += double_to_qstring(lx);    //TAL
                 returntext += ";";
-                returntext += double_to_qstring(wkz_dm/2); //Eckenradius Tasche
+                returntext += double_to_qstring(eckenradius); //Eckenradius Tasche
                 returntext += ";";
                 returntext += double_to_qstring(z);     //TaTi
                 returntext += ";";
