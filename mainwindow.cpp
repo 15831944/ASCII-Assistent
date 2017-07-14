@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#define VERSION "Version 2.2017.07.10"
+#define VERSION "Version 2.2017.07.14"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -600,10 +600,13 @@ void MainWindow::on_pushButton_Start_clicked()
                 }
                 datei_h.close();
             }
-            dateiinhalt_haupt = bearbeitung_auf_die_Unterseite(dateiinhalt_haupt, prefix1);
+
 
             //--------------------------------------------------------------------- ----------------------
             dateiinhalt_haupt = ima_makros_umwandeln(dateiinhalt_haupt);
+            //--------------------------------------------------------------------- ----------------------
+            dateiinhalt_haupt = bearbeitung_auf_die_Unterseite(dateiinhalt_haupt, prefix1);
+
             //--------------------------------------------------------------------- ----------------------Bearbeitungen der Neben-Seite:
 
             //Ich gehe davon aus, der VW alle HBE immer auf die Hauptseite exportiert, daher keine Berücksichtigung für HBEs
@@ -3681,12 +3684,8 @@ QString MainWindow::ima_makros_umwandeln(QString dateiinhalt)
             double ly = zeile.zeile(3).toDouble(); //Werkstücklänge  = Y-Maß
             double dz = zeile.zeile(4).toDouble(); //Werkstückdicke  = Z-Maß
 
-            QString bx_qstring = zeile.zeile(2); //Werkstückbreite = X-Maß
-            QString ly_qstring = zeile.zeile(3); //Werkstücklänge  = Y-Maß
-            QString dz_qstring = zeile.zeile(4); //Werkstückdicke  = Z-Maß
-
             QMessageBox mb;
-            mb.setText("Programmierung noch nicht fertig!\nASCII enthaellt IMA-Makros");
+            mb.setText("Es werden IMAWOP-Beschlaege verwendet.\nProgramme auf Richtigkeit pruefen!!!");
             mb.exec();
 
             zeile.set_text(zeile_qstring);
@@ -3694,40 +3693,313 @@ QString MainWindow::ima_makros_umwandeln(QString dateiinhalt)
             if(zeile_qstring.contains("Kreistasche"))
             {
                 QString afb_qstring = zeile.zeile(14);
+
                 if(afb_qstring.contains("D"))
                 {
-                    //afb_qstring.replace("D", double_to_qstring(dz));
-                    //afb_qstring.replace("D", dz_qstring);
+                    afb_qstring.replace("D", double_to_qstring(dz));
                 }
                 if(afb_qstring.contains("B"))
                 {
-                    //afb_qstring.replace("B", double_to_qstring(bx));
+                    afb_qstring.replace("B", double_to_qstring(bx));
                 }
                 if(afb_qstring.contains("L"))
                 {
-                    //afb_qstring.replace("L", double_to_qstring(ly));
+                    afb_qstring.replace("L", double_to_qstring(ly));
                 }
 
+                double afb = ausdruck_auswerten(afb_qstring).toDouble();
 
+
+                if(afb > 0)
+                {
+                    QString zeile_neu = "";
+                    zeile_neu += "M; TOP; 102";
+                    //x:
+                    QString tmp = zeile.zeile(4);//= Y-Wert vom IMA-makro
+                    if(tmp.contains("D"))
+                    {
+                        tmp.replace("D", double_to_qstring(dz));
+                    }
+                    if(tmp.contains("B"))
+                    {
+                        tmp.replace("B", double_to_qstring(bx));
+                    }
+                    if(tmp.contains("L"))
+                    {
+                        tmp.replace("L", double_to_qstring(ly));
+                    }
+                    double x = ausdruck_auswerten(tmp).toDouble();
+                    zeile_neu += "; ";
+                    zeile_neu += double_to_qstring(x);
+                    //y:
+                    tmp = zeile.zeile(3);//= X-Wert vom IMA-makro
+                    if(tmp.contains("D"))
+                    {
+                        tmp.replace("D", double_to_qstring(dz));
+                    }
+                    if(tmp.contains("B"))
+                    {
+                        tmp.replace("B", double_to_qstring(bx));
+                    }
+                    if(tmp.contains("L"))
+                    {
+                        tmp.replace("L", double_to_qstring(ly));
+                    }
+                    double y = ausdruck_auswerten(tmp).toDouble();
+                    zeile_neu += "; ";
+                    zeile_neu += double_to_qstring(y);
+                    //z:
+                    tmp = zeile.zeile(6);//= Z-Wert vom IMA-makro
+                    if(tmp.contains("D"))
+                    {
+                        tmp.replace("D", double_to_qstring(dz));
+                    }
+                    if(tmp.contains("B"))
+                    {
+                        tmp.replace("B", double_to_qstring(bx));
+                    }
+                    if(tmp.contains("L"))
+                    {
+                        tmp.replace("L", double_to_qstring(ly));
+                    }
+                    double z = ausdruck_auswerten(tmp).toDouble();
+                    if(z<0)
+                    {
+                        z = dz-z;
+                    }
+                    zeile_neu += "; ";
+                    zeile_neu += double_to_qstring(z);
+                    //dm:
+                    tmp = zeile.zeile(5);//= DM-Wert vom IMA-makro
+                    if(tmp.contains("D"))
+                    {
+                        tmp.replace("D", double_to_qstring(dz));
+                    }
+                    if(tmp.contains("B"))
+                    {
+                        tmp.replace("B", double_to_qstring(bx));
+                    }
+                    if(tmp.contains("L"))
+                    {
+                        tmp.replace("L", double_to_qstring(ly));
+                    }
+                    double dm = ausdruck_auswerten(tmp).toDouble();
+                    zeile_neu += "; ";
+                    zeile_neu += double_to_qstring(dm);
+                    //zustellung(optonal):
+                    tmp = zeile.zeile(7);//= LGEZU-Wert vom IMA-makro
+                    if(tmp.contains("D"))
+                    {
+                        tmp.replace("D", double_to_qstring(dz));
+                    }
+                    if(tmp.contains("B"))
+                    {
+                        tmp.replace("B", double_to_qstring(bx));
+                    }
+                    if(tmp.contains("L"))
+                    {
+                        tmp.replace("L", double_to_qstring(ly));
+                    }
+                    double zust_ima = ausdruck_auswerten(tmp).toDouble();
+                    int zust_gan;
+                    if(zust_ima <=0)
+                    {
+                        zust_gan = 1;
+                    }else
+                    {
+                        zust_gan = z/zust_ima;
+                        if(zust_gan <= 0)
+                        {
+                            zust_gan = 1;
+                        }else
+                        {
+                            zust_gan++;
+                        }
+                    }
+                    zeile_neu += "; ";
+                    zeile_neu += double_to_qstring(zust_gan);
+
+                    inhalt_tz.zeile_ersaetzen(i, zeile_neu);
+                }else
+                {
+                    inhalt_tz.zeile_ersaetzen(i, " ");
+                }
+            }else if(zeile_qstring.contains("Rechtecktasche"))
+            {
+                QString afb_qstring = zeile.zeile(14);
+
+                if(afb_qstring.contains("D"))
+                {
+                    afb_qstring.replace("D", double_to_qstring(dz));
+                }
+                if(afb_qstring.contains("B"))
+                {
+                    afb_qstring.replace("B", double_to_qstring(bx));
+                }
+                if(afb_qstring.contains("L"))
+                {
+                    afb_qstring.replace("L", double_to_qstring(ly));
+                }
 
                 double afb = ausdruck_auswerten(afb_qstring).toDouble();
 
                 if(afb > 0)
                 {
-
-
                     QString zeile_neu = "";
-                    zeile_neu += "M; TOP; 102;";
-                    //x:
-                    double x = ausdruck_auswerten(zeile.zeile(3)).toDouble();
-                    //y:
-                    //z:
-                    //dm:
-                    //zustellung(optonal):
-                }
-            }else if(zeile_qstring.contains("Rechtecktasche"))
-            {
+                    zeile_neu += "M; TOP; 101";
 
+                    //x
+                    QString tmp = zeile.zeile(7);//= Y-Wert vom IMA-makro
+                    if(tmp.contains("D"))
+                    {
+                        tmp.replace("D", double_to_qstring(dz));
+                    }
+                    if(tmp.contains("B"))
+                    {
+                        tmp.replace("B", double_to_qstring(bx));
+                    }
+                    if(tmp.contains("L"))
+                    {
+                        tmp.replace("L", double_to_qstring(ly));
+                    }
+                    double x = ausdruck_auswerten(tmp).toDouble();
+                    zeile_neu += "; ";
+                    zeile_neu += double_to_qstring(x);
+                    //y
+                    tmp = zeile.zeile(6);//= X-Wert vom IMA-makro
+                    if(tmp.contains("D"))
+                    {
+                        tmp.replace("D", double_to_qstring(dz));
+                    }
+                    if(tmp.contains("B"))
+                    {
+                        tmp.replace("B", double_to_qstring(bx));
+                    }
+                    if(tmp.contains("L"))
+                    {
+                        tmp.replace("L", double_to_qstring(ly));
+                    }
+                    double y = ausdruck_auswerten(tmp).toDouble();
+                    zeile_neu += "; ";
+                    zeile_neu += double_to_qstring(y);
+                    //z
+                    tmp = zeile.zeile(11);//= Z-Wert vom IMA-makro
+                    if(tmp.contains("D"))
+                    {
+                        tmp.replace("D", double_to_qstring(dz));
+                    }
+                    if(tmp.contains("B"))
+                    {
+                        tmp.replace("B", double_to_qstring(bx));
+                    }
+                    if(tmp.contains("L"))
+                    {
+                        tmp.replace("L", double_to_qstring(ly));
+                    }
+                    double z = ausdruck_auswerten(tmp).toDouble();
+                    if(z<0)
+                    {
+                        z = dz-z;
+                    }
+                    zeile_neu += "; ";
+                    zeile_neu += double_to_qstring(z);
+                    //Länge x
+                    tmp = zeile.zeile(4);//= Y-Länge vom IMA-makro
+                    if(tmp.contains("D"))
+                    {
+                        tmp.replace("D", double_to_qstring(dz));
+                    }
+                    if(tmp.contains("B"))
+                    {
+                        tmp.replace("B", double_to_qstring(bx));
+                    }
+                    if(tmp.contains("L"))
+                    {
+                        tmp.replace("L", double_to_qstring(ly));
+                    }
+                    double talx = ausdruck_auswerten(tmp).toDouble();
+                    zeile_neu += "; ";
+                    zeile_neu += double_to_qstring(talx);
+                    //Länge y
+                    tmp = zeile.zeile(3);//= X-Länge vom IMA-makro
+                    if(tmp.contains("D"))
+                    {
+                        tmp.replace("D", double_to_qstring(dz));
+                    }
+                    if(tmp.contains("B"))
+                    {
+                        tmp.replace("B", double_to_qstring(bx));
+                    }
+                    if(tmp.contains("L"))
+                    {
+                        tmp.replace("L", double_to_qstring(ly));
+                    }
+                    double taby = ausdruck_auswerten(tmp).toDouble();
+                    zeile_neu += "; ";
+                    zeile_neu += double_to_qstring(taby);
+                    //Eckenradius
+                    tmp = zeile.zeile(8);//= Rad vom IMA-makro
+                    if(tmp.contains("D"))
+                    {
+                        tmp.replace("D", double_to_qstring(dz));
+                    }
+                    if(tmp.contains("B"))
+                    {
+                        tmp.replace("B", double_to_qstring(bx));
+                    }
+                    if(tmp.contains("L"))
+                    {
+                        tmp.replace("L", double_to_qstring(ly));
+                    }
+                    double rad = ausdruck_auswerten(tmp).toDouble();
+                    zeile_neu += "; ";
+                    zeile_neu += double_to_qstring(rad);
+                    //Zustellung (optional)
+                    tmp = zeile.zeile(5);//= LGEZU-Wert vom IMA-makro
+                    if(tmp.contains("D"))
+                    {
+                        tmp.replace("D", double_to_qstring(dz));
+                    }
+                    if(tmp.contains("B"))
+                    {
+                        tmp.replace("B", double_to_qstring(bx));
+                    }
+                    if(tmp.contains("L"))
+                    {
+                        tmp.replace("L", double_to_qstring(ly));
+                    }
+                    double zust_ima = ausdruck_auswerten(tmp).toDouble();
+                    int zust_gan;
+                    if(zust_ima <=0)
+                    {
+                        zust_gan = 1;
+                    }else
+                    {
+                        zust_gan = z/zust_ima;
+                        if(zust_gan <= 0)
+                        {
+                            zust_gan = 1;
+                        }else
+                        {
+                            zust_gan++;
+                        }
+                    }
+                    zeile_neu += "; ";
+                    zeile_neu += double_to_qstring(zust_gan);
+                    //Kontur (optional)
+                    zeile_neu += "; 1";
+                    //Drehwinkel (zusatz von mir)
+                    tmp = zeile.zeile(12);//= Drewi vom IMA-makro
+                    double drewi = tmp.toDouble();
+                    zeile_neu += "; ";
+                    zeile_neu += double_to_qstring(drewi);
+
+
+                    inhalt_tz.zeile_ersaetzen(i, zeile_neu);
+                }else
+                {
+                    inhalt_tz.zeile_ersaetzen(i, " ");
+                }
             }
         }
     }

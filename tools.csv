@@ -1,12 +1,12 @@
-Typ	Nummer	Durchmesser	Nutzlaenge
-B	T50	5	35
-B	T51	5.1	40
-B	T60	6	35
-B	T80	8	35
-B	T100	10	35
-B	T150	15	35
-B	T200	20	35
-B	T350	35	35
-S	S426	125	
-M	R602	18	46
-M	R608	8	20
+Typ	Nummer	Durchmesser	Nutzlaenge	Vorschub
+B	T50	5	35	
+B	T51	5.1	40	
+B	T60	6	35	
+B	T80	8	35	
+B	T100	10	35	
+B	T150	15	35	
+B	T200	20	35	
+B	T350	35	35	
+S	S426	125		
+M	R602	18	46	7000
+M	R608	8	20	7000
