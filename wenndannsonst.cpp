@@ -286,9 +286,9 @@ bool WennDannSonst::ist_vergleich(const QString text)
     op.setNum(anz_operatoren);
     QString ve;
     ve.setNum(anz_verbindungszeichen);
-    QMessageBox mb;
-    mb.setText("operatoren: " + op + " verb: " + ve);
-    mb.exec();
+    //QMessageBox mb;
+    //mb.setText("operatoren: " + op + " verb: " + ve);
+    //mb.exec();
 
     if(anz_verbindungszeichen == anz_operatoren-1)
     {
