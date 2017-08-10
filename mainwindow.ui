@@ -77,20 +77,10 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
-      <widget class="QLineEdit" name="lineEdit_prefix2"/>
-     </item>
      <item row="3" column="0">
       <widget class="QLabel" name="label_prefix1">
        <property name="text">
-        <string>Prefix erste Seite:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
-      <widget class="QLabel" name="label_prefix2">
-       <property name="text">
-        <string>Prefix zweite Seite:</string>
+        <string>Prefix:</string>
        </property>
       </widget>
      </item>
