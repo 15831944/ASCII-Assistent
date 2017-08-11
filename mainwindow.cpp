@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#define VERSION "Version 2.2017.08.10"
+#define VERSION "Version 3.2017.08.11"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -25,6 +25,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::setup()
 {
+    prefix1 = ".ascii";
     bezugsmass = 40;
     bool inifile_gefunden = false;
     bool werkzeugdatei_gefunden = false;
@@ -56,12 +57,6 @@ void MainWindow::setup()
 
             file.write("verzeichnis_ziel:");
             file.write("\n");
-
-            file.write("prefix1:");
-            file.write("_Haupt.ascii");
-            file.write("\n");
-            prefix1 = "_Haupt.ascii";
-            ui->lineEdit_prefix1->setText(prefix1);
 
             ui->checkBox_quelldateien_erhalten->setChecked(true);
             file.write("quelldateien_erhalten:ja");
@@ -100,10 +95,6 @@ void MainWindow::setup()
                 {
                     verzeichnis_ziel_ganx = text_mitte(zeile, "verzeichnis_ziel_ganx:", "\n");
                     ui->lineEdit_ziel_ganx->setText(verzeichnis_ziel_ganx);
-                }else if(zeile.contains("prefix1:"))
-                {
-                    prefix1 = text_mitte(zeile, "prefix1:", "\n");
-                    ui->lineEdit_prefix1->setText(prefix1);
                 }else if(zeile.contains("quelldateien_erhalten:"))
                 {
                     quelldateien_erhalten = text_mitte(zeile, "quelldateien_erhalten:", "\n");
@@ -226,11 +217,6 @@ void MainWindow::schreibe_ini()
 
         file.write("verzeichnis_ziel_ganx:");
         file.write(verzeichnis_ziel_ganx.toUtf8());
-        file.write("\n");
-
-        //-------------------------------------------Prefixe:
-        file.write("prefix1:");
-        file.write(prefix1.toUtf8());
         file.write("\n");
 
         //-------------------------------------------Checkboxen:
@@ -364,20 +350,7 @@ void MainWindow::on_pushButton_ziel_ganx_clicked()
         schreibe_ini();
     }
 }
-//-----------------------------------------------------------------------Prefixe:
-void MainWindow::on_lineEdit_prefix1_editingFinished()
-{
-    QString eingabe = ui->lineEdit_prefix1->text();
-    if(!eingabe.isEmpty())
-    {
-        QMessageBox::warning(this,"Fehler","Prefixe sind duerfen nicht gleich sein",QMessageBox::Ok);
-        ui->lineEdit_prefix1->setText(prefix1);
-    }else
-    {
-        prefix1 = eingabe;
-        schreibe_ini();
-    }
-}
+
 
 //-----------------------------------------------------------------------Checkboxen:
 void MainWindow::on_checkBox_quelldateien_erhalten_stateChanged()
