@@ -33,7 +33,6 @@ private slots:
     void on_checkBox_quelldateien_erhalten_stateChanged();
     void on_lineEdit_quelle_editingFinished();
     void on_lineEdit_ziel_editingFinished();
-    void on_lineEdit_prefix1_editingFinished();
     void on_actionInfo_triggered();
     void on_checkBox_std_namen_stateChanged();
     void on_actionWerkzeug_anzeigen_triggered();
